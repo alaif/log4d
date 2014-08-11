@@ -34,34 +34,13 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// Description ---------------------------------------------------------------
+module log4d.logger;
 
-/* Logging to stdout/stderr.  The client code looks like this:
- *
- * string foo(in string bar) {
- *     in {
- *         log.enter("bar = %s", bar);
- *     }
- *     scope(success) {
- *        log.exit("%s", returnValue);
- *     }
- *     scope(failure) else {
- *        if (reallyBad) {
- *            throw log.exitException(new BadException(...));
- *        } else
- *            log.exitError("BadValueDEADBEEF!");
- *        }
- *     }
- *
- *     log.debug1("Doing stuff...");
- *
- *     ... do stuff ...
- *
- * }
- */
+// Description ---------------------------------------------------------------
 
 // Imports -------------------------------------------------------------------
 
+import std.logger;
 import std.array;
 import std.datetime;
 import std.conv;

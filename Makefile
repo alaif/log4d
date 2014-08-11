@@ -36,23 +36,32 @@ default:	all
 
 .SUFFIXES: .o .d
 
-LOG4D_SRC =	log4d.d
+LOG4D_SRC =	log4d/logger.d log4d/package.d
+
+STDLOGGER_SRC =	burner/logger/std/logger/package.d \
+	burner/logger/std/logger/core.d \
+	burner/logger/std/logger/filelogger.d \
+	burner/logger/std/logger/multilogger.d \
+	burner/logger/std/logger/nulllogger.d
 
 DC = dmd
-INC = -I@srcdir@
+INC = -I@srcdir@ -Iburner/logger
 DDOCDIR = ./ddoc
 # DFLAGS = -w -wi $(INC) -release
 DFLAGS = -w -wi -g $(INC) -debug -de -Dd$(DDOCDIR)
 LDLIBS = -L-lutil -defaultlib=libphobos2.so
 LDFLAGS = -shared -fPIC $(LDLIBS)
 
-all:	log4d test
+all:	stdlogger liblog4d test
 
 test:	log4d test.d
-	$(DC) $(DFLAGS) $(LDLIBS) -oftest test.d liblog4d.o
+	$(DC) $(DFLAGS) $(LDLIBS) -oftest test.d liblog4d.o stdlogger.o
 
 clean:
-	rm liblog4d liblog4d.o core *.o test
+	rm stdlogger stdlogger.o liblog4d liblog4d.o core *.o test
 
-log4d:	$(LOG4D_SRC)
+liblog4d:	$(LOG4D_SRC)
 	$(DC) $(DFLAGS) $(LDFLAGS) -ofliblog4d $(LOG4D_SRC)
+
+stdlogger:	$(STDLOGGER_SRC)
+	$(DC) $(DFLAGS) $(LDFLAGS) -ofstdlogger $(STDLOGGER_SRC)

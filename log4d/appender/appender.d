@@ -1,5 +1,5 @@
 /**
- * Log4D - industrial strength logging for D - test program.
+ * Log4D - industrial strength logging for D.
  *
  * Version: $Id$
  *
@@ -34,18 +34,42 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import log4d;
+module log4d.appender;
 
-public void main(string [] args) {
+// Description ---------------------------------------------------------------
 
-    // Setup logging infrastructure
-    // Log4D.init("test.conf");
-    // DEBUG
-    alias Logger Log4D;
-    auto log = Log4D.getLogger("test");
+// Imports -------------------------------------------------------------------
 
-    // TODO: remove
-    log.addOutput(new StdoutLoggerOutput());
-    log.info("Hello");
+import std.array;
+import std.datetime;
+import std.conv;
+import std.stdio;
+import std.format;
+
+// Defines -------------------------------------------------------------------
+
+// Globals -------------------------------------------------------------------
+
+// Classes -------------------------------------------------------------------
+
+/**
+ * An Appender is responsible for sending a log message to a user-visible
+ * location.
+ */
+public class Appender : Logger {
+
+    /**
+     * Subclasses should override this to emit the message to the user.
+     *
+     * Params:
+     *    logger = Logger which generated the message
+     *    time = time at which the message was generated
+     *    level = Logger.INFO/DEBUG1/etc.
+     *    msg = message to the user
+     */
+    abstract public void emit(Logger logger, SysTime time, Logger.Level level, string msg);
 
 }
+
+// Functions -----------------------------------------------------------------
+

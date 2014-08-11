@@ -1,5 +1,5 @@
 /**
- * Log4D - industrial strength logging for D - test program.
+ * Log4D - industrial strength logging for D.
  *
  * Version: $Id$
  *
@@ -34,18 +34,6 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import log4d;
+module log4d;
 
-public void main(string [] args) {
-
-    // Setup logging infrastructure
-    // Log4D.init("test.conf");
-    // DEBUG
-    alias Logger Log4D;
-    auto log = Log4D.getLogger("test");
-
-    // TODO: remove
-    log.addOutput(new StdoutLoggerOutput());
-    log.info("Hello");
-
-}
+public import log4d.logger;
