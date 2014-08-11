@@ -17,9 +17,10 @@ Usage
 The library is currently under initial development, usage patterns are
 still being worked on.
 
-The goal is to be capable of applying a Log4j or Log4perl
-initialization file against a D-based application and have it behave
-in the same way.
+In general the API will mirror Log4perl as much as possible.  The goal
+is to be capable of applying a Log4j, Log4perl, or the Delphi-language
+Log4D initialization file against a D-based application and have it
+behave in exactly the same way.
 
 
 Roadmap
@@ -29,13 +30,22 @@ This is a work in progress.  Many tasks remain before calling this
 version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
-- [ ] Plug into std.logger (after logger reference is included in LoggerPayload)
+  - [ ] init()
+  - [ ] init_and_watch()
   - [ ] getLogger()
-- [ ] init_and_watch()
+- [ ] Plug into std.logger (after logger reference is included in LoggerPayload)
+  - [ ] getLogger() returns MultiLogger
+- [ ] Layouts:
+  - [ ] SimpleLayout
+  - [ ] PatternLayout
+  - [ ] XMLLayout (use same field/attrs as Log::Log4perl::Layout::XMLLayout)
 - [ ] Appenders:
+  - [ ] Alias Log4perl and Log4j appenders to Log4D class names
+  - [ ] Screen
+    - [ ] ECMA backend
+    - [ ] Win32Console backend
   - [ ] File
-    - [ ] Stdio
-    - [ ] XMLFile
+    - [ ] Stdout/Stderr
     - [ ] Rotate option (equivalent to FileRotate)
   - [ ] Syslog
   - [ ] (**contributor needed**) Windows event viewer
@@ -48,5 +58,6 @@ Wishlist
 - [ ] More appenders
   - [ ] Database (need to find stable database layer)
 - [ ] XML file configuration
+- [ ] NDC/MDC implementation
 - [ ] LogStash integration
 
