@@ -36,4 +36,5 @@
 
 module log4d;
 
+public import Log4D = log4d.config;
 public import log4d.logger;

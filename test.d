@@ -40,12 +40,7 @@ public void main(string [] args) {
 
     // Setup logging infrastructure
     // Log4D.init("test.conf");
-    // DEBUG
-    alias Logger Log4D;
     auto log = Log4D.getLogger("test");
-
-    // TODO: remove
-    log.addOutput(new StdoutLoggerOutput());
     log.info("Hello");
 
 }

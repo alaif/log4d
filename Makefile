@@ -36,7 +36,7 @@ default:	all
 
 .SUFFIXES: .o .d
 
-LOG4D_SRC =	log4d/logger.d log4d/package.d
+LOG4D_SRC =	log4d/config.d log4d/logger.d log4d/package.d
 
 STDLOGGER_SRC =	burner/logger/std/logger/package.d \
 	burner/logger/std/logger/core.d \

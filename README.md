@@ -33,8 +33,9 @@ version 1.0:
   - [ ] init()
   - [ ] init_and_watch()
   - [ ] getLogger()
-- [ ] Plug into std.logger (after logger reference is included in LoggerPayload)
-  - [ ] getLogger() returns MultiLogger
+- [ ] std.logger integration:
+  - [ ] stdlog --> rootLogger
+  - [ ] tie LogEntry and Log4DLogger together, then pass to the appender
 - [ ] Layouts:
   - [ ] SimpleLayout
   - [ ] PatternLayout

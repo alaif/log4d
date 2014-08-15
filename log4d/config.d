@@ -34,12 +34,14 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-module log4d.logger;
+module log4d.config;
 
 // Description ---------------------------------------------------------------
 
 // Imports -------------------------------------------------------------------
 
+import log4d.logger;
+import core.sync.mutex;
 import std.logger;
 
 // Defines -------------------------------------------------------------------
@@ -49,99 +51,92 @@ import std.logger;
 // Classes -------------------------------------------------------------------
 
 /**
- * The Log4DLogger interfaces the client-side API (std.logger) to the Log4D
- * system of appenders, filters, and layouts.
+ * Log4DManager configures / manages the entire Log4D subsystem.
  */
-public class Log4DLogger : Logger {
+public class Log4DManager {
 
-    /// The name (category) of this Log4DLogger
-    private string name;
+    /// Mutex used by getLogger()
+    private Mutex mutex;
+
+    /// Singleton instance
+    __gshared private Log4DManager instance;
+
+    /// List of loggers by category
+    private Log4DLogger[string] loggers;
+
+    /// TODO: List of appenders
+    // private Appender[] appenders;
 
     /**
-     * Private constructor
+     * Obtain the singleton instance, creating it if needed.
      *
-     * Params:
-     *    name = logger name, used as both a string to the user and a global unique key
-     *    logLevel = initial logging level
+     * Returns:
+     *    singleton instance
      */
-    public this(string name, LogLevel logLevel) {
-	super(logLevel);
-	this.name = name;
+    public static Log4DManager getInstance() {
+	synchronized {
+	    if (instance is null) {
+		instance = new Log4DManager();
+	    }
+	}
+	return instance;
     }
 
     /**
-     * Send a LogEntry to the correct appender(s).
-     *
-     * Params:
-     *    payload = All information associated with call to log function.
+     * Singleton constructor
      */
-    override void writeLogMsg(ref LogEntry payload) {
-	// TODO: link the payload<-->this and pass to appender(s)
-	std.stdio.stdout.writefln("LogEntry: %s", payload.msg);
+    private this() {
+	mutex = new Mutex();
     }
 
 /+
     /**
-     * Log a function enter event
-     *
-     * Params:
-     *    args = arguments to writef
+     * Create the global instance
      */
-    public void enter(T...)(T args) nothrow {
-	debug {
-	    msg(Level.FUNC_ENTER, args);
-	}
-    }
-
-    /**
-     * Log a function exit event
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void exit(T...)(T args) nothrow {
-	debug {
-	    msg(Level.FUNC_EXIT, args);
-	}
-    }
-
-    /**
-     * Log an event at insane debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug3(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG3, args);
-	}
-    }
-
-    /**
-     * Log an event at moderate debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug2(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG2, args);
-	}
-    }
-
-    /**
-     * Log an event at light debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug1(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG1, args);
-	}
+    static this() {
+	Log4D = new Log4DManager();
     }
 +/
+
+    /**
+     * Factory method to retrieve instance.  It will create one if it does
+     * not already exist.
+     *
+     * Params:
+     *    name = logger name, used as a global unique key
+     *    logLevel = LogLevel.info/debug/...
+     *
+     * Returns:
+     *    logger instance
+     */
+    public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
+	Log4DLogger logger;
+	synchronized (mutex) {
+	    if (name in loggers) {
+		logger = loggers[name];
+	    } else {
+		logger = new Log4DLogger(name, logLevel);
+		loggers[name] = logger;
+	    }
+	}
+	return logger;
+    }
 
 }
 
 // Functions -----------------------------------------------------------------
+
+/**
+ * Factory method to retrieve instance.  It will create one if it does
+ * not already exist.
+ *
+ * Params:
+ *    name = logger name, used as a global unique key
+ *    logLevel = LogLevel.info/debug/...
+ *
+ * Returns:
+ *    logger instance
+ */
+public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
+    return Log4DManager.getInstance().getLogger(name, logLevel);
+}
