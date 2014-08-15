@@ -40,6 +40,7 @@ module log4d.config;
 
 // Imports -------------------------------------------------------------------
 
+import log4d.appender;
 import log4d.logger;
 import core.sync.mutex;
 import std.logger;
@@ -51,21 +52,18 @@ import std.logger;
 // Classes -------------------------------------------------------------------
 
 /**
- * Log4DManager configures / manages the entire Log4D subsystem.
+ * LogManager configures / manages the entire Log4D subsystem.
  */
-public class Log4DManager {
+public class LogManager {
 
     /// Mutex used by getLogger()
     private Mutex mutex;
 
     /// Singleton instance
-    __gshared private Log4DManager instance;
+    __gshared private LogManager instance;
 
     /// List of loggers by category
     private Log4DLogger[string] loggers;
-
-    /// TODO: List of appenders
-    // private Appender[] appenders;
 
     /**
      * Obtain the singleton instance, creating it if needed.
@@ -73,10 +71,10 @@ public class Log4DManager {
      * Returns:
      *    singleton instance
      */
-    public static Log4DManager getInstance() {
+    public static LogManager getInstance() {
 	synchronized {
 	    if (instance is null) {
-		instance = new Log4DManager();
+		instance = new LogManager();
 	    }
 	}
 	return instance;
@@ -87,20 +85,14 @@ public class Log4DManager {
      */
     private this() {
 	mutex = new Mutex();
+
+	// Setup the root logger with default INFO level
+	auto rootLogger = getLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
     }
 
-/+
     /**
-     * Create the global instance
-     */
-    static this() {
-	Log4D = new Log4DManager();
-    }
-+/
-
-    /**
-     * Factory method to retrieve instance.  It will create one if it does
-     * not already exist.
+     * Factory method to retrieve a Logger instance.  It will create one if
+     * it does not already exist.
      *
      * Params:
      *    name = logger name, used as a global unique key
@@ -122,13 +114,56 @@ public class Log4DManager {
 	return logger;
     }
 
+    /**
+     * Check if a Logger with this name is defined.
+     *
+     * Params:
+     *    name = logger name, used as a global unique key
+     *
+     * Returns:
+     *    true if a logger with this name exists
+     */
+    public bool hasLogger(string name) {
+	synchronized (mutex) {
+	    if (name in loggers) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    /**
+     * Initialize Log4D system.
+     *
+     * Params:
+     *    configFilename = name of a file to read the configuration from
+     */
+    public void init(string configFilename) {
+	// Redirect stdlog to Log4D
+	stdlog = getLogger(Log4DLogger.ROOT_LOGGER);
+
+	// TODO - read from the file
+
+
+    }
+
 }
 
 // Functions -----------------------------------------------------------------
 
 /**
- * Factory method to retrieve instance.  It will create one if it does
- * not already exist.
+ * Initialize Log4D system.
+ *
+ * Params:
+ *    configFilename = name of a file to read the configuration from
+ */
+public void init(string configFilename) {
+    LogManager.getInstance().init(configFilename);
+}
+
+/**
+ * Factory method to retrieve a Logger instance.  It will create one if it
+ * does not already exist.
  *
  * Params:
  *    name = logger name, used as a global unique key
@@ -138,5 +173,5 @@ public class Log4DManager {
  *    logger instance
  */
 public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
-    return Log4DManager.getInstance().getLogger(name, logLevel);
+    return LogManager.getInstance().getLogger(name, logLevel);
 }

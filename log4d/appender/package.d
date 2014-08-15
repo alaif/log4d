@@ -1,5 +1,5 @@
 /**
- * Log4D - industrial strength logging for D - test program.
+ * Log4D - industrial strength logging for D.
  *
  * Version: $Id$
  *
@@ -34,17 +34,57 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import log4d;
+module log4d.appender;
 
-public void main(string [] args) {
+// Description ---------------------------------------------------------------
 
-    // Setup logging infrastructure
-    Log4D.init("test.conf");
-    auto log = Log4D.getLogger("test");
-    auto appender = Appender.getAppender("log4d.appender.Screen");
-    log.parent().addAppender(appender);
+// Imports -------------------------------------------------------------------
 
-    log.info("Hello");
-    stdlog.warning("Hello from stdlog");
+import log4d.logger;
+import std.logger;
+import log4d.appender.screen;
+
+// Defines -------------------------------------------------------------------
+
+// Globals -------------------------------------------------------------------
+
+// Classes -------------------------------------------------------------------
+
+/**
+ * An Appender is a logging destination.
+ */
+public abstract class Appender {
+
+    /**
+     * Subclasses must implement logging function.
+     *
+     * Params:
+     *    logger = logger that generated the message
+     *    message = the message parameters
+     */
+    public void log(Logger logger, Logger.LogEntry message);
+
+    /**
+     * Protected constructor for subclasses.
+     */
+    protected this() {
+    }
+
+    /**
+     * Public constructor finds subclass by name.
+     *
+     * Params:
+     *    className = name of subclass to return
+     */
+    static public Appender getAppender(string className) {
+	if (className == "log4d.appender.Screen") {
+	    return new Screen();
+	}
+
+	assert(0, className ~ " not found");
+    }
 
 }
+
+// Functions -----------------------------------------------------------------
+

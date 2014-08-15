@@ -36,7 +36,8 @@ default:	all
 
 .SUFFIXES: .o .d
 
-LOG4D_SRC =	log4d/config.d log4d/logger.d log4d/package.d
+LOG4D_SRC =	log4d/config.d log4d/logger.d log4d/package.d \
+	log4d/appender/package.d log4d/appender/screen.d
 
 STDLOGGER_SRC =	burner/logger/std/logger/package.d \
 	burner/logger/std/logger/core.d \
@@ -48,7 +49,7 @@ DC = dmd
 INC = -I@srcdir@ -Iburner/logger
 DDOCDIR = ./ddoc
 # DFLAGS = -w -wi $(INC) -release
-DFLAGS = -w -wi -g $(INC) -debug -de -Dd$(DDOCDIR)
+DFLAGS = -w -wi -g $(INC) -debug -de -Dd$(DDOCDIR) -unittest
 LDLIBS = -L-lutil -defaultlib=libphobos2.so
 LDFLAGS = -shared -fPIC $(LDLIBS)
 

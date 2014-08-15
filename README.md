@@ -32,14 +32,14 @@ version 1.0:
 - [ ] log4d.conf (non-XML) reader/parser
   - [ ] init()
   - [ ] init_and_watch()
-  - [ ] getLogger()
-- [ ] std.logger integration:
-  - [ ] stdlog --> rootLogger
-  - [ ] tie LogEntry and Log4DLogger together, then pass to the appender
 - [ ] Layouts:
   - [ ] SimpleLayout
   - [ ] PatternLayout
-  - [ ] XMLLayout (use same field/attrs as Log::Log4perl::Layout::XMLLayout)
+- [ ] Filters
+  - [ ] Boolean
+  - [ ] LevelMatch
+  - [ ] LevelRange
+  - [ ] StringMatch
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names
   - [ ] Screen
@@ -56,6 +56,7 @@ version 1.0:
 Wishlist
 --------
 
+- [ ] XMLLayout (use same field/attrs as Log::Log4perl::Layout::XMLLayout)
 - [ ] More appenders
   - [ ] Database (need to find stable database layer)
 - [ ] XML file configuration

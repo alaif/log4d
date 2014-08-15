@@ -40,7 +40,11 @@ module log4d.logger;
 
 // Imports -------------------------------------------------------------------
 
+import std.regex;
+import std.string;
 import std.logger;
+import log4d.appender;
+import log4d.config;
 
 // Defines -------------------------------------------------------------------
 
@@ -54,8 +58,24 @@ import std.logger;
  */
 public class Log4DLogger : Logger {
 
+    /// The root logger name
+    public static const string ROOT_LOGGER = "rootLogger";
+
     /// The name (category) of this Log4DLogger
     private string name;
+
+    /// The appenders to write to.  If empty, go up the logger name (category) heirarchy.
+    private Appender [] appenders;
+
+    /**
+     * Add an Appender to write to.
+     *
+     * Params:
+     *    appender = Appender to add
+     */
+    public void addAppender(Appender appender) {
+	appenders ~= appender;
+    }
 
     /**
      * Private constructor
@@ -70,77 +90,71 @@ public class Log4DLogger : Logger {
     }
 
     /**
+     * Find my parent logger in the heirarchy of loggers.
+     *
+     * Returns:
+     *    parent logger
+     */
+    public Log4DLogger parent() {
+	assert(name != ROOT_LOGGER);
+
+	auto parentName = name;
+
+	// Perl-style match, use '::' as delimiter
+	auto regPerl = ctRegex!(`^(.*)::((?!::).*)$`);
+
+	// Normal match, use '.' as delimiter
+	auto regNormal = ctRegex!(`^(.*)\.([^\.]*)$`);
+
+	auto reg = regNormal;
+	if (indexOf(name, "::") >= 0) {
+	    reg = regPerl;
+	}
+
+	while (parentName != ROOT_LOGGER) {
+	    // std.stdio.stdout.writefln("%s", parentName);
+	    auto mat = matchFirst(parentName, reg);
+	    if (mat) {
+		parentName = mat.captures[1];
+	    } else {
+		parentName = ROOT_LOGGER;
+	    }
+	    if (LogManager.getInstance().hasLogger(parentName)) {
+		return LogManager.getInstance().getLogger(parentName);
+	    }
+	}
+	// Should never get here
+	assert(0, "Did not find parent logger name");
+    }
+    unittest {
+	auto log = getLogger("this.is.a.logger.name", LogLevel.info);
+	auto log2 = getLogger("this.is", LogLevel.info);
+	assert(log2 is log.parent());
+	assert(log2.parent().name == "rootLogger");
+	log2 = getLogger("this::is::a::logger::name", LogLevel.info);
+	log = getLogger("this::is::a", LogLevel.error);
+	assert(log is log2.parent());
+	log = new Log4DLogger("this.is:a.logger:name", LogLevel.info);
+	assert(Log4DLogger.ROOT_LOGGER == log.parent().name);
+    }
+
+    /**
      * Send a LogEntry to the correct appender(s).
      *
      * Params:
      *    payload = All information associated with call to log function.
      */
     override void writeLogMsg(ref LogEntry payload) {
-	// TODO: link the payload<-->this and pass to appender(s)
-	std.stdio.stdout.writefln("LogEntry: %s", payload.msg);
-    }
-
-/+
-    /**
-     * Log a function enter event
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void enter(T...)(T args) nothrow {
-	debug {
-	    msg(Level.FUNC_ENTER, args);
+	if (appenders.length > 0) {
+	    foreach (appender; appenders) {
+		appender.log(this, payload);
+	    }
+	} else {
+	    if (name != ROOT_LOGGER) {
+		parent().writeLogMsg(payload);
+	    }
 	}
     }
-
-    /**
-     * Log a function exit event
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void exit(T...)(T args) nothrow {
-	debug {
-	    msg(Level.FUNC_EXIT, args);
-	}
-    }
-
-    /**
-     * Log an event at insane debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug3(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG3, args);
-	}
-    }
-
-    /**
-     * Log an event at moderate debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug2(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG2, args);
-	}
-    }
-
-    /**
-     * Log an event at light debug level
-     *
-     * Params:
-     *    args = arguments to writef
-     */
-    public void debug1(T...)(T args) nothrow {
-	debug {
-	    msg(Level.DEBUG1, args);
-	}
-    }
-+/
 
 }
 
