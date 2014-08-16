@@ -40,3 +40,5 @@ public import std.logger;
 public import Log4D = log4d.config;
 public import log4d.logger;
 public import log4d.appender;
+public import log4d.filter;
+public import log4d.layout;

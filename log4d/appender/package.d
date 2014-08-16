@@ -40,8 +40,10 @@ module log4d.appender;
 
 // Imports -------------------------------------------------------------------
 
-import log4d.logger;
 import std.logger;
+import log4d.filter;
+import log4d.layout;
+import log4d.logger;
 import log4d.appender.screen;
 
 // Defines -------------------------------------------------------------------
@@ -54,6 +56,12 @@ import log4d.appender.screen;
  * An Appender is a logging destination.
  */
 public abstract class Appender {
+
+    /// The Layout to use
+    public Layout layout;
+
+    /// The optional Filter to use
+    public Filter filter;
 
     /**
      * Subclasses must implement logging function.

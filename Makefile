@@ -37,7 +37,9 @@ default:	all
 .SUFFIXES: .o .d
 
 LOG4D_SRC =	log4d/config.d log4d/logger.d log4d/package.d \
-	log4d/appender/package.d log4d/appender/screen.d
+	log4d/appender/package.d log4d/appender/screen.d \
+	log4d/layout/package.d \
+	log4d/filter/package.d
 
 STDLOGGER_SRC =	burner/logger/std/logger/package.d \
 	burner/logger/std/logger/core.d \
@@ -55,7 +57,7 @@ LDFLAGS = -shared -fPIC $(LDLIBS)
 
 all:	stdlogger liblog4d test
 
-test:	log4d test.d
+test:	liblog4d stdlogger test.d
 	$(DC) $(DFLAGS) $(LDLIBS) -oftest test.d liblog4d.o stdlogger.o
 
 clean:

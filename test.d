@@ -42,6 +42,9 @@ public void main(string [] args) {
     Log4D.init("test.conf");
     auto log = Log4D.getLogger("test");
     auto appender = Appender.getAppender("log4d.appender.Screen");
+    appender.layout = Layout.getLayout("log4d.layout.SimpleLayout");
+    auto filter = Filter.getFilter("log4d.filter.LevelMatch");
+    // appender.filter = filter;
     log.parent().addAppender(appender);
 
     log.info("Hello");

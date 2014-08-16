@@ -33,11 +33,8 @@ version 1.0:
   - [ ] init()
   - [ ] init_and_watch()
 - [ ] Layouts:
-  - [ ] SimpleLayout
   - [ ] PatternLayout
 - [ ] Filters
-  - [ ] Boolean
-  - [ ] LevelMatch
   - [ ] LevelRange
   - [ ] StringMatch
 - [ ] Appenders:
@@ -57,6 +54,7 @@ Wishlist
 --------
 
 - [ ] XMLLayout (use same field/attrs as Log::Log4perl::Layout::XMLLayout)
+- [ ] Boolean Filter
 - [ ] More appenders
   - [ ] Database (need to find stable database layer)
 - [ ] XML file configuration
