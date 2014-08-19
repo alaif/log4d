@@ -65,6 +65,16 @@ public class Screen : Appender {
     }
 
     /**
+     * Set a property from the config file.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    override public void setProperty(string name, string value) {
+    }
+
+    /**
      * Subclasses must implement logging function.
      *
      * Params:

@@ -30,7 +30,8 @@ This is a work in progress.  Many tasks remain before calling this
 version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
-  - [ ] init()
+  - [ ] init() - allow re-init
+  - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] Layouts:
   - [ ] PatternLayout

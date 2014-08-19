@@ -79,6 +79,15 @@ public abstract class Appender {
     }
 
     /**
+     * Subclasses must implement property setter.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    public void setProperty(string name, string value);
+
+    /**
      * Public constructor finds subclass by name.
      *
      * Params:

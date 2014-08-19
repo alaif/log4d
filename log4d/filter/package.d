@@ -41,6 +41,7 @@ module log4d.filter;
 // Imports -------------------------------------------------------------------
 
 import std.logger;
+import log4d.config;
 import log4d.logger;
 
 // Defines -------------------------------------------------------------------
@@ -78,6 +79,15 @@ public abstract class Filter {
     }
 
     /**
+     * Subclasses must implement property setter.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    public void setProperty(string name, string value);
+
+    /**
      * Public constructor finds subclass by name.
      *
      * Params:
@@ -98,6 +108,19 @@ public class LevelMatch : Filter {
 
     /// The log level to match on
     public LogLevel levelToMatch = LogLevel.info;
+
+    /**
+     * Set a property from the config file.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    override public void setProperty(string name, string value) {
+	if (name == "LevelToMatch") {
+	    levelToMatch = levelFromString(value);
+	}
+    }
 
     /**
      * Determine if this message should be emitted.

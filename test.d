@@ -40,14 +40,14 @@ public void main(string [] args) {
 
     // Setup logging infrastructure
     Log4D.init("test.conf");
-    auto log = Log4D.getLogger("test");
-    auto appender = Appender.getAppender("log4d.appender.Screen");
-    appender.layout = Layout.getLayout("log4d.layout.SimpleLayout");
-    auto filter = Filter.getFilter("log4d.filter.LevelMatch");
-    // appender.filter = filter;
-    log.parent().addAppender(appender);
+    auto logObject = Log4D.getLogger("test");
+    logObject.info("Hello from a logger obtained via getLogger() - info level");
 
-    log.info("Hello");
-    stdlog.warning("Hello from stdlog");
+    // Check easy logger
+    log("Hello from the log() function - initial globalLogLevel");
+    std.logger.globalLogLevel = LogLevel.warning;
+    log("Hello from the log() function - warning globalLogLevel");
+
+    stdlog.warning("Hello from stdlog - warning level");
 
 }

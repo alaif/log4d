@@ -62,10 +62,10 @@ public class Log4DLogger : Logger {
     public static const string ROOT_LOGGER = "rootLogger";
 
     /// The name (category) of this Log4DLogger
-    private string name;
+    public string name;
 
     /// The appenders to write to.  If empty, go up the logger name (category) heirarchy.
-    private Appender [] appenders;
+    public Appender [] appenders;
 
     /**
      * Add an Appender to write to.
@@ -142,7 +142,7 @@ public class Log4DLogger : Logger {
      * Send a LogEntry to the correct appender(s).
      *
      * Params:
-     *    payload = All information associated with call to log function.
+     *    payload = all information associated with call to log function.
      */
     override void writeLogMsg(ref LogEntry payload) {
 	if (appenders.length > 0) {
@@ -151,7 +151,26 @@ public class Log4DLogger : Logger {
 	    }
 	} else {
 	    if (name != ROOT_LOGGER) {
-		parent().writeLogMsg(payload);
+		parent().writeLogMsg(this, payload);
+	    }
+	}
+    }
+
+    /**
+     * Send a LogEntry to the correct appender(s).
+     *
+     * Params:
+     *    logger = the original logger called by the client
+     *    payload = all information associated with call to log function.
+     */
+    private void writeLogMsg(Log4DLogger logger, ref LogEntry payload) {
+	if (appenders.length > 0) {
+	    foreach (appender; appenders) {
+		appender.log(logger, payload);
+	    }
+	} else {
+	    if (name != ROOT_LOGGER) {
+		parent().writeLogMsg(logger, payload);
 	    }
 	}
     }

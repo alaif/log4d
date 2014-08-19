@@ -77,6 +77,15 @@ public abstract class Layout {
     }
 
     /**
+     * Subclasses must implement property setter.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    public void setProperty(string name, string value);
+
+    /**
      * Public constructor finds subclass by name.
      *
      * Params:
@@ -94,6 +103,17 @@ public abstract class Layout {
  * SimpleLayout renders a message as "<LogLevel> - <message>"
  */
 public class SimpleLayout : Layout {
+
+    /**
+     * Set a property from the config file.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    override public void setProperty(string name, string value) {
+    }
+
     /**
      * Render the message
      *

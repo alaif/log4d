@@ -40,10 +40,15 @@ module log4d.config;
 
 // Imports -------------------------------------------------------------------
 
-import log4d.appender;
-import log4d.logger;
 import core.sync.mutex;
+import std.conv;
 import std.logger;
+import std.stdio;
+import std.string;
+import log4d.appender;
+import log4d.filter;
+import log4d.layout;
+import log4d.logger;
 
 // Defines -------------------------------------------------------------------
 
@@ -142,8 +147,141 @@ public class LogManager {
 	// Redirect stdlog to Log4D
 	stdlog = getLogger(Log4DLogger.ROOT_LOGGER);
 
-	// TODO - read from the file
+	// List of appenders by name
+	Appender[string] appenders;
 
+	// List of appenders to add to the root logger
+	bool appendersToAdd[string];
+
+	auto infile = File(configFilename, "r");
+	size_t lineNumber = 0;
+	foreach (line; infile.byLine()) {
+	    lineNumber++;
+	    line = strip(line);
+	    if (line.length == 0) {
+		continue;
+	    }
+	    if (line[0] == '#') {
+		continue;
+	    }
+	    auto tokens = split(line, "=");
+	    if (tokens.length == 2) {
+		auto key	= to!string(strip(tokens[0]));
+		auto value	= to!string(strip(tokens[1]));
+
+		// stdout.writefln("Key: %s", key);
+		// stdout.writefln("   : %s", value);
+
+		auto keyTokens = split(key, ".");
+		// stdout.writefln("   --> %s", keyTokens);
+
+		// Look for <log4X>.<something>
+		if (keyTokens.length < 2) {
+		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
+			configFilename, lineNumber, line);
+		    continue;
+		}
+
+		// Check for supported logging directives
+		switch (toLower(keyTokens[0])) {
+		case "log4d":
+		    break;
+		case "log4j":
+		    break;
+		case "log4perl":
+		    break;
+		default:
+		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
+			configFilename, lineNumber, line);
+		    continue;
+		}
+
+		switch (keyTokens[1]) {
+		case "rootLogger":
+		    // Looking for <LEVEL>, <appender 1> [, <appender 2> ]...
+		    auto appenderTokens = split(value, ",");
+		    // stdout.writefln("   --> %s", appenderTokens);
+		    if (appenderTokens.length < 2) {
+			stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
+			    configFilename, lineNumber, line);
+			continue;
+		    }
+		    getLogger(Log4DLogger.ROOT_LOGGER).logLevel = levelFromString(strip(appenderTokens[0]));
+
+		    foreach (a; appenderTokens[1 .. $]) {
+			appendersToAdd[strip(a)] = true;
+		    }
+		    break;
+
+		case "appender":
+		    if (keyTokens.length == 3) {
+			// <log4X>.<appender>.<appender name> = <classname>
+			auto newAppender = Appender.getAppender(value);
+			appenders[keyTokens[2]] = newAppender;
+			if (keyTokens[2] in appendersToAdd) {
+			    getLogger(Log4DLogger.ROOT_LOGGER).addAppender(newAppender);
+			}
+		    } else if (keyTokens.length == 4) {
+			// <log4X>.<appender>.<appender name>.<property> = <value>
+			auto appender = appenders[keyTokens[2]];
+			if (!appender) {
+			    stderr.writefln("Error in config file %s line %d: appender \'%s\' is not defined",
+				configFilename, lineNumber, keyTokens[2]);
+			    continue;
+			}
+			switch (keyTokens[3]) {
+			case "layout":
+			    appender.layout = Layout.getLayout(value);
+			    break;
+			case "filter":
+			    appender.filter = Filter.getFilter(value);
+			    break;
+			default:
+			    appender.setProperty(keyTokens[3], value);
+			    break;
+			}
+		    } else if (keyTokens.length == 5) {
+			// <log4X>.<appender>.<appender name>.<level|filter>.<property> = <value>
+			auto appender = appenders[keyTokens[2]];
+			if (!appender) {
+			    stderr.writefln("Error in config file %s line %d: appender \'%s\' is not defined",
+				configFilename, lineNumber, keyTokens[2]);
+			    continue;
+			}
+			switch (keyTokens[3]) {
+			case "layout":
+			    if (!appender.layout) {
+				stderr.writefln("Error in config file %s line %d: Layout for appender \'%s\' is not defined",
+				    configFilename, lineNumber, keyTokens[2]);
+				continue;
+			    }
+			    appender.layout.setProperty(keyTokens[4], value);
+			    break;
+			case "filter":
+			    if (!appender.filter) {
+				stderr.writefln("Error in config file %s line %d: Filter for appender \'%s\' is not defined",
+				    configFilename, lineNumber, keyTokens[2]);
+				continue;
+			    }
+			    appender.filter.setProperty(keyTokens[4], value);
+			    break;
+			default:
+			    stderr.writefln("Error in config file %s line %d: unknown appender property \'%s\'",
+				configFilename, lineNumber, keyTokens[3] ~ "." ~ keyTokens[4]);
+			    continue;
+			}
+		    }
+		    break;
+
+		default:
+		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
+			configFilename, lineNumber, line);
+		    break;
+		}
+
+	    }
+
+	}
 
     }
 
@@ -174,4 +312,36 @@ public void init(string configFilename) {
  */
 public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
     return LogManager.getInstance().getLogger(name, logLevel);
+}
+
+/**
+ * Convert a string to a LogLevel
+ *
+ * Params:
+ *    levelString = "info", "trace", ...
+ *
+ * Returns:
+ *    the corresponding LogLevel
+ */
+public LogLevel levelFromString(string levelString) {
+    switch (toLower(levelString)) {
+    case "all":
+	return LogLevel.all;
+    case "trace":
+	return LogLevel.trace;
+    case "info":
+	return LogLevel.info;
+    case "warning":
+	return LogLevel.warning;
+    case "error":
+	return LogLevel.error;
+    case "critical":
+	return LogLevel.critical;
+    case "fatal":
+	return LogLevel.fatal;
+    case "off":
+	return LogLevel.off;
+    default:
+	return LogLevel.off;
+    }
 }
