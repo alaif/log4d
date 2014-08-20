@@ -31,12 +31,12 @@ version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
   - [ ] init() - allow re-init
+  - [ ] init_from_string()
   - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] Layouts:
   - [ ] PatternLayout
 - [ ] Filters
-  - [ ] LevelRange
   - [ ] StringMatch
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names
@@ -61,4 +61,3 @@ Wishlist
 - [ ] XML file configuration
 - [ ] NDC/MDC implementation
 - [ ] LogStash integration
-

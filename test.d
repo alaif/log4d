@@ -49,5 +49,6 @@ public void main(string [] args) {
     log("Hello from the log() function - warning globalLogLevel");
 
     stdlog.warning("Hello from stdlog - warning level");
+    stdlog.error("ERROR from stdlog");
 
 }
