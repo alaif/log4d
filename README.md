@@ -36,8 +36,6 @@ version 1.0:
   - [ ] init_and_watch()
 - [ ] Layouts:
   - [ ] PatternLayout
-- [ ] Filters
-  - [ ] StringMatch
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names
   - [ ] Screen
@@ -47,9 +45,12 @@ version 1.0:
     - [ ] Stdout/Stderr
     - [ ] Rotate option (equivalent to FileRotate)
   - [ ] Syslog
-  - [ ] (**contributor needed**) Windows event viewer
+  - [ ] (** contributor needed **) Windows event viewer
   - [ ] vibe.core.log
   - [ ] Email
+  - [ ] Throttle (takes an appender and throttles repeat output)
+  - [ ] DebugBuffer (takes an appender and shows the previous X
+        debug+ messages before each error message)
 
 Wishlist
 --------

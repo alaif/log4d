@@ -41,6 +41,7 @@ module log4d.filter;
 // Imports -------------------------------------------------------------------
 
 import std.logger;
+import std.regex;
 import std.string;
 import log4d.config;
 import log4d.logger;
@@ -121,6 +122,9 @@ public abstract class Filter {
 	}
 	if (className == "log4d.filter.LevelRange") {
 	    return new LevelRange();
+	}
+	if (className == "log4d.filter.StringMatch") {
+	    return new StringMatch();
 	}
 	assert(0, className ~ " not found");
     }
@@ -220,6 +224,56 @@ public class LevelRange : Filter {
 		(message.logLevel <= levelMax)) &&
 	    (acceptOnMatch == false)
 	) {
+	    return true;
+	}
+	return false;
+    }
+}
+
+/**
+ * StringMatch matches the logged message text against a regex, specified in
+ * the logging configuration file by StringToMatch.
+ */
+public class StringMatch : Filter {
+
+    /// The string to match on
+    public auto stringToMatch = regex(".*");
+
+    /**
+     * Set a property from the config file.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    override public void setProperty(string name, string value) {
+	super.setProperty(name, value);
+	if (name == "StringToMatch") {
+	    stringToMatch = regex(value);
+	}
+    }
+
+    /**
+     * Determine if this message should be emitted.
+     *
+     * Params:
+     *    logger = logger that generated the message
+     *    message = the message parameters
+     *
+     * Returns:
+     *    if true, then this message should be emitted by the Appender, else suppress the message
+     */
+    override public bool ok(Logger logger, Logger.LogEntry message) {
+	bool matched = false;
+	auto mat = match(message.msg, stringToMatch);
+	if (mat) {
+	    matched = true;
+	}
+
+	if ((matched == true) && (acceptOnMatch == true)) {
+	    return true;
+	}
+	if ((matched == false) && (acceptOnMatch == false)) {
 	    return true;
 	}
 	return false;

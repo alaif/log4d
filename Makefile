@@ -52,19 +52,21 @@ INC = -I@srcdir@ -Iburner/logger
 DDOCDIR = ./ddoc
 # DFLAGS = -w -wi $(INC) -release
 DFLAGS = -w -wi -g $(INC) -debug -de -Dd$(DDOCDIR) -unittest
-LDLIBS = -L-lutil -defaultlib=libphobos2.so
-LDFLAGS = -shared -fPIC $(LDLIBS)
+# LDLIBS = -L-lutil -defaultlib=libphobos2.so
+# LDFLAGS = -shared -fPIC $(LDLIBS)
+LDLIBS = -L-lutil
+LDFLAGS = -lib -fPIC $(LDLIBS)
 
-all:	stdlogger liblog4d test
+all:	test
 
-test:	liblog4d stdlogger test.d
-	$(DC) $(DFLAGS) $(LDLIBS) -oftest test.d liblog4d.o stdlogger.o
+test:	liblog4d.a stdlogger.a test.d
+	$(DC) $(DFLAGS) $(LDLIBS) -oftest test.d liblog4d.a stdlogger.a
 
 clean:
-	rm stdlogger stdlogger.o liblog4d liblog4d.o core *.o test
+	rm stdlogger.a liblog4d.a core *.o test
 
-liblog4d:	$(LOG4D_SRC)
+liblog4d.a:	$(LOG4D_SRC)
 	$(DC) $(DFLAGS) $(LDFLAGS) -ofliblog4d $(LOG4D_SRC)
 
-stdlogger:	$(STDLOGGER_SRC)
+stdlogger.a:	$(STDLOGGER_SRC)
 	$(DC) $(DFLAGS) $(LDFLAGS) -ofstdlogger $(STDLOGGER_SRC)

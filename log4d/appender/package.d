@@ -88,6 +88,12 @@ public abstract class Appender {
     public void setProperty(string name, string value);
 
     /**
+     * Release any resources used by this appender, e.g. close a file,
+     * terminate a socket connection, etc.
+     */
+    public void shutdown() {}
+
+    /**
      * Public constructor finds subclass by name.
      *
      * Params:
