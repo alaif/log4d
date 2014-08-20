@@ -42,6 +42,7 @@ module log4d.config;
 
 import core.sync.mutex;
 import std.conv;
+import std.file;
 import std.logger;
 import std.stdio;
 import std.string;
@@ -62,7 +63,7 @@ import log4d.logger;
 public class LogManager {
 
     /// Mutex used by getLogger()
-    private Mutex mutex;
+    public Mutex mutex;
 
     /// Singleton instance
     __gshared private LogManager instance;
@@ -144,6 +145,16 @@ public class LogManager {
      *    configFilename = name of a file to read the configuration from
      */
     public void init(string configFilename) {
+	initFromString(readText(configFilename));
+    }
+
+    /**
+     * Initialize Log4D system.
+     *
+     * Params:
+     *    configData = contents of a configuration file
+     */
+    public void initFromString(string configData) {
 	// Redirect stdlog to Log4D
 	stdlog = getLogger(Log4DLogger.ROOT_LOGGER);
 
@@ -153,9 +164,8 @@ public class LogManager {
 	// List of appenders to add to the root logger
 	bool appendersToAdd[string];
 
-	auto infile = File(configFilename, "r");
 	size_t lineNumber = 0;
-	foreach (line; infile.byLine()) {
+	foreach (line; splitLines(configData)) {
 	    lineNumber++;
 	    line = strip(line);
 	    if (line.length == 0) {
@@ -177,8 +187,8 @@ public class LogManager {
 
 		// Look for <log4X>.<something>
 		if (keyTokens.length < 2) {
-		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
-			configFilename, lineNumber, line);
+		    stderr.writefln("Error in config line %d: unknown directive \'%s\'",
+			lineNumber, line);
 		    continue;
 		}
 
@@ -191,8 +201,8 @@ public class LogManager {
 		case "log4perl":
 		    break;
 		default:
-		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
-			configFilename, lineNumber, line);
+		    stderr.writefln("Error in config line %d: unknown directive \'%s\'",
+			lineNumber, line);
 		    continue;
 		}
 
@@ -202,8 +212,8 @@ public class LogManager {
 		    auto appenderTokens = split(value, ",");
 		    // stdout.writefln("   --> %s", appenderTokens);
 		    if (appenderTokens.length < 2) {
-			stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
-			    configFilename, lineNumber, line);
+			stderr.writefln("Error in config line %d: unknown directive \'%s\'",
+			    lineNumber, line);
 			continue;
 		    }
 		    getLogger(Log4DLogger.ROOT_LOGGER).logLevel = levelFromString(strip(appenderTokens[0]));
@@ -225,8 +235,8 @@ public class LogManager {
 			// <log4X>.<appender>.<appender name>.<property> = <value>
 			auto appender = appenders[keyTokens[2]];
 			if (!appender) {
-			    stderr.writefln("Error in config file %s line %d: appender \'%s\' is not defined",
-				configFilename, lineNumber, keyTokens[2]);
+			    stderr.writefln("Error in config line %d: appender \'%s\' is not defined",
+				lineNumber, keyTokens[2]);
 			    continue;
 			}
 			switch (keyTokens[3]) {
@@ -244,38 +254,38 @@ public class LogManager {
 			// <log4X>.<appender>.<appender name>.<level|filter>.<property> = <value>
 			auto appender = appenders[keyTokens[2]];
 			if (!appender) {
-			    stderr.writefln("Error in config file %s line %d: appender \'%s\' is not defined",
-				configFilename, lineNumber, keyTokens[2]);
+			    stderr.writefln("Error in config line %d: appender \'%s\' is not defined",
+				lineNumber, keyTokens[2]);
 			    continue;
 			}
 			switch (keyTokens[3]) {
 			case "layout":
 			    if (!appender.layout) {
-				stderr.writefln("Error in config file %s line %d: Layout for appender \'%s\' is not defined",
-				    configFilename, lineNumber, keyTokens[2]);
+				stderr.writefln("Error in config line %d: Layout for appender \'%s\' is not defined",
+				    lineNumber, keyTokens[2]);
 				continue;
 			    }
 			    appender.layout.setProperty(keyTokens[4], value);
 			    break;
 			case "filter":
 			    if (!appender.filter) {
-				stderr.writefln("Error in config file %s line %d: Filter for appender \'%s\' is not defined",
-				    configFilename, lineNumber, keyTokens[2]);
+				stderr.writefln("Error in config line %d: Filter for appender \'%s\' is not defined",
+				    lineNumber, keyTokens[2]);
 				continue;
 			    }
 			    appender.filter.setProperty(keyTokens[4], value);
 			    break;
 			default:
-			    stderr.writefln("Error in config file %s line %d: unknown appender property \'%s\'",
-				configFilename, lineNumber, keyTokens[3] ~ "." ~ keyTokens[4]);
+			    stderr.writefln("Error in config line %d: unknown appender property \'%s\'",
+				lineNumber, keyTokens[3] ~ "." ~ keyTokens[4]);
 			    continue;
 			}
 		    }
 		    break;
 
 		default:
-		    stderr.writefln("Error in config file %s line %d: unknown directive \'%s\'",
-			configFilename, lineNumber, line);
+		    stderr.writefln("Error in config line %d: unknown directive \'%s\'",
+			lineNumber, line);
 		    break;
 		}
 

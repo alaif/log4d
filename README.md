@@ -31,11 +31,23 @@ version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
   - [ ] init() - allow re-init
-  - [ ] init_from_string()
   - [ ] init_once()
   - [ ] init_and_watch()
-- [ ] Layouts:
-  - [ ] PatternLayout
+- [ ] PatternLayout:
+  - [ ] %C The module name (NOT class name) at the logging call site
+  - [ ] %F The filename at the logging call site
+  - [ ] %H The system hostname (as determined by std.socket.Socket.hostName)
+  - [ ] %l The "pretty function name" at the logging call site
+  - [ ] %L Line number at the logging call site
+  - [ ] %M Function name at the logging call site
+  - [ ] %P Process ID (PID) of the caller's process
+  - [ ] %r Number of milliseconds elapsed from program start to logging event
+	(as determined by std.datetime.Clock.currAppTick)
+  - [ ] %R Number of milliseconds elapsed from last logging event to current
+	logging event
+  - [ ] %T A stack trace of functions called
+  - [ ] %t Thread ID of the caller's thread
+  - [ ] %d{...} Current date in customized format
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names
   - [ ] Screen
@@ -45,12 +57,12 @@ version 1.0:
     - [ ] Stdout/Stderr
     - [ ] Rotate option (equivalent to FileRotate)
   - [ ] Syslog
-  - [ ] (** contributor needed **) Windows event viewer
+  - [ ] --contributor needed-- Windows event viewer
   - [ ] vibe.core.log
   - [ ] Email
   - [ ] Throttle (takes an appender and throttles repeat output)
   - [ ] DebugBuffer (takes an appender and shows the previous X
-        debug+ messages before each error message)
+	debug+ messages before each error message)
 
 Wishlist
 --------

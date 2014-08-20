@@ -72,6 +72,7 @@ public class Screen : Appender {
      *    value = value of property to set
      */
     override public void setProperty(string name, string value) {
+	super.setProperty(name, value);
     }
 
     /**
@@ -81,7 +82,7 @@ public class Screen : Appender {
      *    logger = logger that generated the message
      *    message = the message parameters
      */
-    override public void log(Logger logger, Logger.LogEntry message) {
+    override public void log(Log4DLogger logger, Logger.LogEntry message) {
 	if (filter !is null) {
 	    if (!filter.ok(logger, message)) {
 		return;
@@ -89,9 +90,9 @@ public class Screen : Appender {
 	}
 	auto rendered = layout.render(logger, message);
 	if (stdout == true) {
-	    std.stdio.stdout.writeln(rendered);
+	    std.stdio.stdout.write(rendered);
 	} else {
-	    std.stdio.stderr.writeln(rendered);
+	    std.stdio.stderr.write(rendered);
 	}
     }
 
