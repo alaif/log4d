@@ -56,7 +56,7 @@ import log4d.logger;
 public class Screen : Appender {
 
     /// If true, render to stdout.  Otherwise, render to stderr.
-    public bool stdout = true;
+    private bool stdout = true;
 
     /**
      * Public constructor
@@ -92,15 +92,19 @@ public class Screen : Appender {
 	    auto rendered = layout.render(logger, message);
 	    if (stdout == true) {
 		std.stdio.stdout.write(rendered);
+		std.stdio.stdout.flush();
 	    } else {
 		std.stdio.stderr.write(rendered);
+		std.stdio.stderr.flush();
 	    }
 	} else {
 	    auto rendered = message.msg ~ "\n";
 	    if (stdout == true) {
 		std.stdio.stdout.write(rendered);
+		std.stdio.stdout.flush();
 	    } else {
 		std.stdio.stderr.write(rendered);
+		std.stdio.stderr.flush();
 	    }
 	}
     }

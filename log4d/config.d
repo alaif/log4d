@@ -123,6 +123,19 @@ public class LogManager {
     }
 
     /**
+     * Factory method to retrieve the root Logger instance.
+     *
+     * Params:
+     *    name = logger name, used as a global unique key
+     *
+     * Returns:
+     *    logger instance
+     */
+    public Log4DLogger getRootLogger(string name) {
+	return getLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
+    }
+
+    /**
      * Check if a Logger with this name is defined.
      *
      * Params:
@@ -222,6 +235,7 @@ public class LogManager {
 		    foreach (a; appenderTokens[1 .. $]) {
 			appendersToAdd[strip(a)] = true;
 		    }
+		    // stdout.writefln("  appendersToAdd: %s", appendersToAdd);
 		    break;
 
 		case "appender":
@@ -230,6 +244,7 @@ public class LogManager {
 			auto newAppender = Appender.getAppender(value);
 			appenders[keyTokens[2]] = newAppender;
 			if (keyTokens[2] in appendersToAdd) {
+			    // stdout.writefln("  add appender: %s", keyTokens[2]);
 			    getLogger(Log4DLogger.ROOT_LOGGER).addAppender(newAppender);
 			}
 		    } else if (keyTokens.length == 4) {
@@ -311,6 +326,19 @@ public void init(string configFilename) {
 }
 
 /**
+ * Factory method to retrieve the root Logger instance.
+ *
+ * Params:
+ *    name = logger name, used as a global unique key
+ *
+ * Returns:
+ *    logger instance
+ */
+public Log4DLogger getRootLogger(string name) {
+    return LogManager.getInstance().getRootLogger(name);
+}
+
+/**
  * Factory method to retrieve a Logger instance.  It will create one if it
  * does not already exist.  Note that the default LogLevel is INFO, not
  * TRACE.  This is a departure from log4j in which the default level for the
@@ -340,6 +368,8 @@ public LogLevel levelFromString(string levelString) {
     switch (toLower(levelString)) {
     case "all":
 	return LogLevel.all;
+    case "debug":
+	return LogLevel.trace;
     case "trace":
 	return LogLevel.trace;
     case "info":

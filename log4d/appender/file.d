@@ -34,18 +34,16 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-module log4d.appender;
+module log4d.appender.file;
 
 // Description ---------------------------------------------------------------
 
 // Imports -------------------------------------------------------------------
 
 import std.logger;
-import log4d.filter;
-import log4d.layout;
+import std.stdio;
+import log4d.appender;
 import log4d.logger;
-import log4d.appender.screen;
-import log4d.appender.file;
 
 // Defines -------------------------------------------------------------------
 
@@ -54,15 +52,38 @@ import log4d.appender.file;
 // Classes -------------------------------------------------------------------
 
 /**
- * An Appender is a logging destination.
+ * The FileAppender writes to a file.
  */
-public abstract class Appender {
+public class FileAppender : Appender {
 
-    /// The Layout to use
-    public Layout layout;
+    /// Filename
+    private string filename;
 
-    /// The optional Filter to use
-    public Filter filter;
+    /// File reference
+    private File file;
+
+    /**
+     * Public constructor
+     */
+    public this() {
+    }
+
+    /**
+     * Set a property from the config file.
+     *
+     * Params:
+     *    name = name of property to set
+     *    value = value of property to set
+     */
+    override public void setProperty(string name, string value) {
+	super.setProperty(name, value);
+	if (name == "filename") {
+	    filename = value;
+	    // TODO: mode
+	    file = File(filename, "a");
+	    // TODO: flush
+	}
+    }
 
     /**
      * Subclasses must implement logging function.
@@ -71,45 +92,19 @@ public abstract class Appender {
      *    logger = logger that generated the message
      *    message = the message parameters
      */
-    public void log(Log4DLogger logger, Logger.LogEntry message);
-
-    /**
-     * Protected constructor for subclasses.
-     */
-    protected this() {
-    }
-
-    /**
-     * Subclasses must implement property setter.
-     *
-     * Params:
-     *    name = name of property to set
-     *    value = value of property to set
-     */
-    public void setProperty(string name, string value) {
-    }
-
-    /**
-     * Release any resources used by this appender, e.g. close a file,
-     * terminate a socket connection, etc.
-     */
-    public void shutdown() {}
-
-    /**
-     * Public constructor finds subclass by name.
-     *
-     * Params:
-     *    className = name of subclass to return
-     */
-    static public Appender getAppender(string className) {
-	if (className == "log4d.appender.Screen") {
-	    return new Screen();
+    override public void log(Log4DLogger logger, Logger.LogEntry message) {
+	if (filter !is null) {
+	    if (!filter.ok(logger, message)) {
+		return;
+	    }
 	}
-	if (className == "log4d.appender.File") {
-	    return new FileAppender();
+	if (layout !is null) {
+	    auto rendered = layout.render(logger, message);
+	    file.write(rendered);
+	} else {
+	    auto rendered = message.msg ~ "\n";
+	    file.write(rendered);
 	}
-
-	assert(0, className ~ " not found");
     }
 
 }

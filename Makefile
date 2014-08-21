@@ -37,7 +37,7 @@ default:	all
 .SUFFIXES: .o .d
 
 LOG4D_SRC =	log4d/config.d log4d/logger.d log4d/package.d \
-	log4d/appender/package.d log4d/appender/screen.d \
+	log4d/appender/package.d log4d/appender/screen.d log4d/appender/file.d \
 	log4d/layout/package.d \
 	log4d/filter/package.d
 

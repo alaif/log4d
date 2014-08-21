@@ -147,6 +147,7 @@ public class Log4DLogger : Logger {
     override void writeLogMsg(ref LogEntry payload) {
 	if (appenders.length > 0) {
 	    foreach (appender; appenders) {
+		// std.stdio.stdout.writefln("[log] %x appender.log(%s)", appender.toHash(), payload.msg);
 		appender.log(this, payload);
 	    }
 	} else {
@@ -166,6 +167,7 @@ public class Log4DLogger : Logger {
     private void writeLogMsg(Log4DLogger logger, ref LogEntry payload) {
 	if (appenders.length > 0) {
 	    foreach (appender; appenders) {
+		// std.stdio.stdout.writefln("[parent] %x appender.log(%s)", appender.toHash(), payload.msg);
 		appender.log(logger, payload);
 	    }
 	} else {

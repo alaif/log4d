@@ -45,7 +45,7 @@ public void main(string [] args) {
     auto logObject = Log4D.getLogger("my.test.logger");
     logObject.trace("Hello from a logger obtained via getLogger() - trace level");
     logObject.info("Hello from a logger obtained via getLogger() - info level");
-    core.thread.Thread.sleep(core.time.dur!"msecs"(231));
+    // core.thread.Thread.sleep(core.time.dur!"msecs"(231));
     logObject.error("Hello from a logger obtained via getLogger() - error level");
 
     // Check easy logger

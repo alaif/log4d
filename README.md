@@ -1,7 +1,13 @@
 Log4D
 =====
 
-This library contains a Log4j/Log4perl-like logging system for the D language.
+Log4D is a logging system that behaves similarly to Log4perl and
+Log4j.  Log4D uses std.logger as the front end, but routes messages to
+appenders which have filters and layouts.  In general the API strives
+to mirror Log4perl as much as possible.  A near-term goal is to be
+capable of applying a Log4j, Log4perl, or the Delphi-language Log4D
+initialization file against a D-based application and have it behave
+in exactly the same way.
 
 
 License
@@ -14,15 +20,45 @@ LICENSE-1.0 for the full license text.
 Usage
 -----
 
-The library is currently under initial development, usage patterns are
-still being worked on.
+Using Log4D on the client side is straightforward:
 
-In general the API will mirror Log4perl as much as possible.  The goal
-is to be capable of applying a Log4j, Log4perl, or the Delphi-language
-Log4D initialization file against a D-based application and have it
-behave in exactly the same way.
+```D
+import log4d;
 
+void main(string [] args) {
+    Log4D.init("/path/to/logger.conf");
+    auto log = Log4D.getLogger("my.component.name");
 
+    log.info("This message will show up in the appenders specified in the configuration file");
+}
+```
+
+On the backend, Log4D is controlled by a configuration file that looks
+very similar to a Log4perl file.  An example is below:
+
+```
+
+# This config file puts two appenders on the root logger.  The CONSOLE
+# appender will emit messages directly to stdout, which has a filter to
+# only show messages at INFO and above.  The LOGFILE appender writes
+# to "test.log", and doesn't filter anything.  Both appenders use a
+# PatternLayout to do printf-like formatting of the available logging
+# fields.
+log4d.rootLogger              = TRACE, CONSOLE, LOGFILE
+
+log4d.appender.CONSOLE        = log4d.appender.Screen
+log4d.appender.CONSOLE.layout = log4d.layout.PatternLayout
+log4d.appender.CONSOLE.layout.ConversionPattern = %d %p{1} %c %m%n
+log4d.appender.CONSOLE.filter          = log4d.filter.LevelRange
+log4d.appender.CONSOLE.filter.LevelMin = info
+log4d.appender.CONSOLE.filter.LevelMax = off
+
+log4d.appender.LOGFILE          = log4d.appender.File
+log4d.appender.LOGFILE.filename = test.log
+log4d.appender.LOGFILE.layout   = log4d.layout.PatternLayout
+log4d.appender.LOGFILE.layout.ConversionPattern = %d %p{1} %c %m%n
+
+```
 
 
 Roadmap
@@ -33,6 +69,7 @@ version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
   - [ ] init() - allow re-init
+    - [ ] specify logger/category level and appender
   - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] PatternLayout:
@@ -44,7 +81,12 @@ version 1.0:
     - [ ] ECMA backend
     - [ ] Win32Console backend
   - [ ] File
-    - [ ] Stdout/Stderr
+    - [ ] mode
+    - [ ] autoflush
+    - [ ] umask
+    - [ ] create_at_logtime
+    - [ ] header_text
+    - [ ] mkpath, mkpath_umask
     - [ ] Rotate option (equivalent to FileRotate)
   - [ ] Syslog
   - [ ] --contributor needed-- Windows event viewer
