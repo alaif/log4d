@@ -23,6 +23,8 @@ Log4D initialization file against a D-based application and have it
 behave in exactly the same way.
 
 
+
+
 Roadmap
 -------
 
@@ -34,19 +36,7 @@ version 1.0:
   - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] PatternLayout:
-  - [ ] %C The module name (NOT class name) at the logging call site
-  - [ ] %F The filename at the logging call site
-  - [ ] %H The system hostname (as determined by std.socket.Socket.hostName)
-  - [ ] %l The "pretty function name" at the logging call site
-  - [ ] %L Line number at the logging call site
-  - [ ] %M Function name at the logging call site
-  - [ ] %P Process ID (PID) of the caller's process
-  - [ ] %r Number of milliseconds elapsed from program start to logging event
-	(as determined by std.datetime.Clock.currAppTick)
-  - [ ] %R Number of milliseconds elapsed from last logging event to current
-	logging event
   - [ ] %T A stack trace of functions called
-  - [ ] %t Thread ID of the caller's thread
   - [ ] %d{...} Current date in customized format
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names

@@ -34,6 +34,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+module my.test.modname;
+
 import log4d;
 
 public void main(string [] args) {
@@ -41,7 +43,9 @@ public void main(string [] args) {
     // Setup logging infrastructure
     Log4D.init("test.conf");
     auto logObject = Log4D.getLogger("my.test.logger");
+    logObject.trace("Hello from a logger obtained via getLogger() - trace level");
     logObject.info("Hello from a logger obtained via getLogger() - info level");
+    core.thread.Thread.sleep(core.time.dur!"msecs"(231));
     logObject.error("Hello from a logger obtained via getLogger() - error level");
 
     // Check easy logger

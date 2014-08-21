@@ -40,11 +40,13 @@ module log4d.layout;
 
 // Imports -------------------------------------------------------------------
 
+import core.thread;
 import std.array;
 import std.datetime;
 import std.format;
 import std.logger;
 import std.string;
+import std.socket;
 import log4d.config;
 import log4d.logger;
 
@@ -171,7 +173,7 @@ public class PatternLayout : Layout {
     private string conversionPattern = "%p - %m";
 
     /// Shared time since last call to render()
-    private static __gshared SysTime lastLogTime;
+    private static __gshared TickDuration lastLogTime;
 
     /// The pieces of the formatted message
     private Token [] tokens;
@@ -242,6 +244,13 @@ public class PatternLayout : Layout {
 	protected string braces;
 
 	/**
+	 * Some subclasses change printf/braces in a different way.  Let them
+	 * use an empty constructor.
+	 */
+	protected this() {
+	}
+
+	/**
 	 * Public constructor
 	 *
 	 * Params:
@@ -267,20 +276,22 @@ public class PatternLayout : Layout {
 	 *    braces = the optional braces part
 	 */
 	public this(string printf, string braces) {
-	    super(printf, braces);
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
 	}
 
 	/**
-	 * Produce the string representation.
+	 * Produce "INFO" or "I" depending on braces.
 	 *
 	 * Params:
-	 *    logger = logger that generated the message
 	 *    message = the message parameters
 	 *
 	 * Returns:
 	 *    string that is ready to be appended in PatternLayout.render()
 	 */
-	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	private string logLevelString(Logger.LogEntry message) {
 	    if (braces == "1") {
 		final switch (message.logLevel) {
 		case LogLevel.all:
@@ -320,6 +331,26 @@ public class PatternLayout : Layout {
 	    case LogLevel.off:
 		return "OFF";
 	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto str = logLevelString(message);
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, str);
+		return writer.data;
+	    }
+	    return str;
 	}
     }
 
@@ -378,7 +409,10 @@ public class PatternLayout : Layout {
 	 *    braces = the optional braces part
 	 */
 	public this(string printf, string braces) {
-	    super(printf, braces);
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
 	}
 
 	/**
@@ -394,7 +428,7 @@ public class PatternLayout : Layout {
 	override public string render(Log4DLogger logger, Logger.LogEntry message) {
 	    if (printf.length > 0) {
 		auto writer = appender!string();
-		formattedWrite(writer, "%" ~ printf ~ "s", message.msg);
+		formattedWrite(writer, printf, message.msg);
 		return writer.data;
 	    }
 	    return message.msg;
@@ -414,7 +448,10 @@ public class PatternLayout : Layout {
 	 *    braces = the optional braces part
 	 */
 	public this(string printf, string braces) {
-	    super(printf, braces);
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
 	}
 
 	/**
@@ -430,10 +467,412 @@ public class PatternLayout : Layout {
 	override public string render(Log4DLogger logger, Logger.LogEntry message) {
 	    if (printf.length > 0) {
 		auto writer = appender!string();
-		formattedWrite(writer, "%" ~ printf ~ "s", logger.name);
+		formattedWrite(writer, printf, logger.name);
 		return writer.data;
 	    }
 	    return logger.name;
+	}
+    }
+
+    /**
+     * Format for the module name: %C
+     */
+    private class ModuleNameToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, message.moduleName);
+		return writer.data;
+	    }
+	    return message.moduleName;
+	}
+    }
+
+    /**
+     * Format for the function name: %F
+     */
+    private class FileNameToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, message.file);
+		return writer.data;
+	    }
+	    return message.file;
+	}
+    }
+
+    /**
+     * Format for the pretty function name: %l
+     */
+    private class PrettyFunctionNameToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, message.prettyFuncName);
+		return writer.data;
+	    }
+	    return message.prettyFuncName;
+	}
+    }
+
+    /**
+     * Format for the function name: %M
+     */
+    private class FunctionNameToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, message.funcName);
+		return writer.data;
+	    }
+	    return message.funcName;
+	}
+    }
+
+    /**
+     * Format for the hostname: %H
+     */
+    private class HostnameToken : FormatToken {
+
+	/// Determine hostname only once
+	private __gshared string hostname = "";
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+
+	    synchronized (LogManager.getInstance().mutex) {
+		if (hostname.length == 0) {
+		    hostname = Socket.hostName;
+		}
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    if (printf.length > 0) {
+		auto writer = appender!string();
+		formattedWrite(writer, printf, hostname);
+		return writer.data;
+	    }
+	    return hostname;
+	}
+    }
+
+    /**
+     * Format for the line number: %L
+     */
+    private class LineNumberToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    this.printf = "%" ~ printf ~ "d";
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto writer = appender!string();
+	    if (printf.length > 0) {
+		formattedWrite(writer, printf, message.line);
+	    } else {
+		formattedWrite(writer, "%d", message.line);
+	    }
+	    return writer.data;
+	}
+    }
+
+    /**
+     * Format for the PID: %P
+     */
+    private class ProcessIDToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "s";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto writer = appender!string();
+	    if (printf.length > 0) {
+		formattedWrite(writer, printf, getpid());
+	    } else {
+		formattedWrite(writer, "%s", getpid());
+	    }
+	    return writer.data;
+	}
+    }
+
+    /**
+     * Format for the thread ID: %t
+     */
+    private class ThreadIDToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    if (printf.length > 0) {
+		this.printf = "%" ~ printf ~ "x";
+	    }
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto writer = appender!string();
+	    auto myThread = Thread.getThis();
+	    if (printf.length > 0) {
+		formattedWrite(writer, printf, myThread.toHash());
+	    } else {
+		formattedWrite(writer, "%x", myThread.toHash());
+	    }
+	    return writer.data;
+	}
+    }
+
+    /**
+     * Format for the time elapsed since the application was started: %r
+     */
+    private class AppMillisToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    this.printf = "%" ~ printf ~ "d";
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto writer = appender!string();
+	    if (printf.length > 0) {
+		formattedWrite(writer, printf, Clock.currAppTick().to!("msecs", long)());
+	    } else {
+		formattedWrite(writer, "%d", Clock.currAppTick().to!("msecs", long)());
+	    }
+	    return writer.data;
+	}
+    }
+
+    /**
+     * Format for the time elapsed since the last logging call: %R
+     */
+    private class DiffMillisToken : FormatToken {
+
+	/**
+	 * Public constructor
+	 *
+	 * Params:
+	 *    printf = the printf part of the format
+	 *    braces = the optional braces part
+	 */
+	public this(string printf, string braces) {
+	    this.braces = braces;
+	    this.printf = "%" ~ printf ~ "d";
+	}
+
+	/**
+	 * Produce the string representation.
+	 *
+	 * Params:
+	 *    logger = logger that generated the message
+	 *    message = the message parameters
+	 *
+	 * Returns:
+	 *    string that is ready to be appended in PatternLayout.render()
+	 */
+	override public string render(Log4DLogger logger, Logger.LogEntry message) {
+	    auto now = Clock.currSystemTick;
+	    auto diffTime = now - lastLogTime;
+
+	    auto writer = appender!string();
+	    if (printf.length > 0) {
+		formattedWrite(writer, printf, diffTime.to!("msecs", long));
+	    } else {
+		formattedWrite(writer, "%d", diffTime.to!("msecs", long));
+	    }
+	    return writer.data;
 	}
     }
 
@@ -542,8 +981,38 @@ public class PatternLayout : Layout {
 		    printf = "";
 		    tokens ~= printfToken;
 		    continue;
+		} else if (ch == 'C') {
+		    printfToken = new ModuleNameToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
 		} else if (ch == 'd') {
 		    printfToken = new DateToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'F') {
+		    printfToken = new FileNameToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'H') {
+		    printfToken = new HostnameToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'l') {
+		    printfToken = new PrettyFunctionNameToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'L') {
+		    printfToken = new LineNumberToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'M') {
+		    printfToken = new FunctionNameToken(printf, braces);
 		    printf = "";
 		    tokens ~= printfToken;
 		    continue;
@@ -556,6 +1025,26 @@ public class PatternLayout : Layout {
 		    tokens ~= new StringToken("\n");
 		    printf = "";
 		    state = State.LITERAL;
+		    continue;
+		} else if (ch == 'P') {
+		    printfToken = new ProcessIDToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'r') {
+		    printfToken = new AppMillisToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 'R') {
+		    printfToken = new DiffMillisToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
+		    continue;
+		} else if (ch == 't') {
+		    printfToken = new ThreadIDToken(printf, braces);
+		    printf = "";
+		    tokens ~= printfToken;
 		    continue;
 		}
 
@@ -616,7 +1105,7 @@ public class PatternLayout : Layout {
      *    string that is ready to be emitted by the Appender
      */
     override public string render(Log4DLogger logger, Logger.LogEntry message) {
-	auto now = Clock.currTime;
+	auto now = Clock.currSystemTick;
 	auto writer = appender!string();
 
 	foreach (t; tokens) {

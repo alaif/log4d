@@ -88,11 +88,20 @@ public class Screen : Appender {
 		return;
 	    }
 	}
-	auto rendered = layout.render(logger, message);
-	if (stdout == true) {
-	    std.stdio.stdout.write(rendered);
+	if (layout !is null) {
+	    auto rendered = layout.render(logger, message);
+	    if (stdout == true) {
+		std.stdio.stdout.write(rendered);
+	    } else {
+		std.stdio.stderr.write(rendered);
+	    }
 	} else {
-	    std.stdio.stderr.write(rendered);
+	    auto rendered = message.msg ~ "\n";
+	    if (stdout == true) {
+		std.stdio.stdout.write(rendered);
+	    } else {
+		std.stdio.stderr.write(rendered);
+	    }
 	}
     }
 

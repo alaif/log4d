@@ -98,7 +98,9 @@ public class LogManager {
 
     /**
      * Factory method to retrieve a Logger instance.  It will create one if
-     * it does not already exist.
+     * it does not already exist.  Note that the default LogLevel is INFO,
+     * not TRACE.  This is a departure from log4j in which the default level
+     * for the root logger is DEBUG.
      *
      * Params:
      *    name = logger name, used as a global unique key
@@ -107,7 +109,7 @@ public class LogManager {
      * Returns:
      *    logger instance
      */
-    public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
+    public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.info) {
 	Log4DLogger logger;
 	synchronized (mutex) {
 	    if (name in loggers) {
@@ -217,7 +219,6 @@ public class LogManager {
 			continue;
 		    }
 		    getLogger(Log4DLogger.ROOT_LOGGER).logLevel = levelFromString(strip(appenderTokens[0]));
-
 		    foreach (a; appenderTokens[1 .. $]) {
 			appendersToAdd[strip(a)] = true;
 		    }
@@ -311,7 +312,9 @@ public void init(string configFilename) {
 
 /**
  * Factory method to retrieve a Logger instance.  It will create one if it
- * does not already exist.
+ * does not already exist.  Note that the default LogLevel is INFO, not
+ * TRACE.  This is a departure from log4j in which the default level for the
+ * root logger is DEBUG.
  *
  * Params:
  *    name = logger name, used as a global unique key
@@ -320,7 +323,7 @@ public void init(string configFilename) {
  * Returns:
  *    logger instance
  */
-public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.all) {
+public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.info) {
     return LogManager.getInstance().getLogger(name, logLevel);
 }
 
