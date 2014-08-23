@@ -42,6 +42,7 @@ public void main(string [] args) {
 
     // Setup logging infrastructure
     Log4D.init("test.conf");
+    // Log4D.easyInit();
     auto logObject = Log4D.getLogger("my.test.logger");
     logObject.trace("Hello from a logger obtained via getLogger() - trace level");
     logObject.info("Hello from a logger obtained via getLogger() - info level");

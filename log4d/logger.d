@@ -96,7 +96,7 @@ public class Log4DLogger : Logger {
      *    parent logger
      */
     public Log4DLogger parent() {
-	assert(name != ROOT_LOGGER);
+	assert(this !is LogManager.getInstance().getRootLogger());
 
 	auto parentName = name;
 
@@ -111,16 +111,16 @@ public class Log4DLogger : Logger {
 	    reg = regPerl;
 	}
 
-	while (parentName != ROOT_LOGGER) {
+	while (parentName != "") {
 	    // std.stdio.stdout.writefln("%s", parentName);
 	    auto mat = matchFirst(parentName, reg);
 	    if (mat) {
 		parentName = mat.captures[1];
+		if (LogManager.getInstance().hasLogger(parentName)) {
+		    return LogManager.getInstance().getLogger(parentName);
+		}
 	    } else {
-		parentName = ROOT_LOGGER;
-	    }
-	    if (LogManager.getInstance().hasLogger(parentName)) {
-		return LogManager.getInstance().getLogger(parentName);
+		return LogManager.getInstance().getRootLogger();
 	    }
 	}
 	// Should never get here
@@ -136,6 +136,7 @@ public class Log4DLogger : Logger {
 	assert(log is log2.parent());
 	log = new Log4DLogger("this.is:a.logger:name", LogLevel.info);
 	assert(Log4DLogger.ROOT_LOGGER == log.parent().name);
+	assert(LogManager.getInstance().getRootLogger() is log.parent());
     }
 
     /**

@@ -68,6 +68,9 @@ public class LogManager {
     /// Singleton instance
     __gshared private LogManager instance;
 
+    /// The special root logger
+    private Log4DLogger rootLogger;
+
     /// List of loggers by category
     private Log4DLogger[string] loggers;
 
@@ -93,7 +96,7 @@ public class LogManager {
 	mutex = new Mutex();
 
 	// Setup the root logger with default INFO level
-	auto rootLogger = getLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
+	rootLogger = new Log4DLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
     }
 
     /**
@@ -125,14 +128,12 @@ public class LogManager {
     /**
      * Factory method to retrieve the root Logger instance.
      *
-     * Params:
-     *    name = logger name, used as a global unique key
-     *
      * Returns:
      *    logger instance
      */
-    public Log4DLogger getRootLogger(string name) {
-	return getLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
+    public Log4DLogger getRootLogger() {
+	assert(rootLogger !is null);
+	return rootLogger;
     }
 
     /**
@@ -154,6 +155,18 @@ public class LogManager {
     }
 
     /**
+     * Perform "easy" initialization of Log4D: one rootLogger logging
+     * everything to a Screen appender.
+     */
+    public void easyInit() {
+	initFromString(q{
+log4d.rootLogger              = TRACE, CONSOLE
+log4d.appender.CONSOLE        = log4d.appender.Screen
+log4d.appender.CONSOLE.layout = log4d.layout.SimpleLayout
+});
+    }
+
+    /**
      * Initialize Log4D system.
      *
      * Params:
@@ -171,13 +184,16 @@ public class LogManager {
      */
     public void initFromString(string configData) {
 	// Redirect stdlog to Log4D
-	stdlog = getLogger(Log4DLogger.ROOT_LOGGER);
+	stdlog = getRootLogger();
 
 	// List of appenders by name
 	Appender[string] appenders;
 
 	// List of appenders to add to the root logger
-	bool appendersToAdd[string];
+	bool rootAppendersToAdd[string];
+
+	// List of appenders to add to non-root logger
+	string [] loggerAppendersToAdd[string];
 
 	size_t lineNumber = 0;
 	foreach (line; splitLines(configData)) {
@@ -231,11 +247,11 @@ public class LogManager {
 			    lineNumber, line);
 			continue;
 		    }
-		    getLogger(Log4DLogger.ROOT_LOGGER).logLevel = levelFromString(strip(appenderTokens[0]));
+		    getRootLogger().logLevel = levelFromString(strip(appenderTokens[0]));
 		    foreach (a; appenderTokens[1 .. $]) {
-			appendersToAdd[strip(a)] = true;
+			rootAppendersToAdd[strip(a)] = true;
 		    }
-		    // stdout.writefln("  appendersToAdd: %s", appendersToAdd);
+		    // stdout.writefln("  rootAppendersToAdd: %s", rootAppendersToAdd);
 		    break;
 
 		case "appender":
@@ -243,10 +259,6 @@ public class LogManager {
 			// <log4X>.<appender>.<appender name> = <classname>
 			auto newAppender = Appender.getAppender(value);
 			appenders[keyTokens[2]] = newAppender;
-			if (keyTokens[2] in appendersToAdd) {
-			    // stdout.writefln("  add appender: %s", keyTokens[2]);
-			    getLogger(Log4DLogger.ROOT_LOGGER).addAppender(newAppender);
-			}
 		    } else if (keyTokens.length == 4) {
 			// <log4X>.<appender>.<appender name>.<property> = <value>
 			auto appender = appenders[keyTokens[2]];
@@ -299,6 +311,25 @@ public class LogManager {
 		    }
 		    break;
 
+		case "logger":
+		    // <log4X>.<logger>.<my.logger.name> = <LEVEL>, <appender 1> [, <appender 2> ]...
+		    auto loggerName = join(keyTokens[2 .. $], ".");
+		    auto logger = getLogger(loggerName);
+
+		    auto appenderTokens = split(value, ",");
+		    // stdout.writefln("   --> %s", appenderTokens);
+		    if (appenderTokens.length < 2) {
+			stderr.writefln("Error in config line %d: unknown directive \'%s\'",
+			    lineNumber, line);
+			continue;
+		    }
+		    logger.logLevel = levelFromString(strip(appenderTokens[0]));
+		    foreach (a; appenderTokens[1 .. $]) {
+			loggerAppendersToAdd[strip(a)] ~= logger.name;
+		    }
+		    // stdout.writefln("  rootAppendersToAdd: %s", rootAppendersToAdd);
+		    break;
+
 		default:
 		    stderr.writefln("Error in config line %d: unknown directive \'%s\'",
 			lineNumber, line);
@@ -307,13 +338,34 @@ public class LogManager {
 
 	    }
 
-	}
+	} // foreach (line; splitLines(configData))
 
+	// Tie up all the appenders and loggers
+	foreach (appenderName; appenders.keys) {
+	    if (appenderName in rootAppendersToAdd) {
+		// stdout.writefln("  rootLogger add appender: %s", appenderName);
+		getRootLogger().addAppender(appenders[appenderName]);
+	    }
+	}
+	foreach (appenderName; loggerAppendersToAdd.keys) {
+	    foreach (loggerName; loggerAppendersToAdd[appenderName]) {
+		// stdout.writefln("  logger %s add appender: %s", loggerName, appenderName);
+		getLogger(loggerName).addAppender(appenders[appenderName]);
+	    }
+	}
     }
 
 }
 
 // Functions -----------------------------------------------------------------
+
+/**
+ * Perform "easy" initialization of Log4D: one rootLogger logging
+ * everything to a Screen appender.
+ */
+public void easyInit() {
+    LogManager.getInstance().easyInit();
+}
 
 /**
  * Initialize Log4D system.
@@ -328,14 +380,11 @@ public void init(string configFilename) {
 /**
  * Factory method to retrieve the root Logger instance.
  *
- * Params:
- *    name = logger name, used as a global unique key
- *
  * Returns:
  *    logger instance
  */
-public Log4DLogger getRootLogger(string name) {
-    return LogManager.getInstance().getRootLogger(name);
+public Log4DLogger getRootLogger() {
+    return LogManager.getInstance().getRootLogger();
 }
 
 /**

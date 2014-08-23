@@ -33,6 +33,21 @@ void main(string [] args) {
 }
 ```
 
+An even simpler method is to use easyInit().  This will set the root
+logger to TRACE level and emit messages to stdout with a simple layout
+of "<log level> - <message>":
+
+```D
+import log4d;
+
+void main(string [] args) {
+    Log4D.easyInit();
+    auto log = Log4D.getLogger("my.component.name");
+
+    log.info("This message will show up in the appenders specified in the configuration file");
+}
+```
+
 On the backend, Log4D is controlled by a configuration file that looks
 very similar to a Log4perl file.  An example is below:
 
@@ -69,7 +84,6 @@ version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
   - [ ] init() - allow re-init
-    - [ ] specify logger/category level and appender
   - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] PatternLayout:

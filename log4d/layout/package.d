@@ -356,6 +356,12 @@ public class PatternLayout : Layout {
 
     /**
      * Format for the date: %D
+     *
+     * TODO:
+     *    %d{ABSOLUTE}
+     *    %d{DATE}
+     *    %d{ISO8801}
+     *    %d{<SimpleDateFormat spec>}
      */
     private class DateToken : FormatToken {
 
@@ -437,6 +443,8 @@ public class PatternLayout : Layout {
 
     /**
      * Format for the logger name: %c
+     *
+     * TODO: %c{1}, %c{2}, ...
      */
     private class LoggerNameToken : FormatToken {
 
@@ -515,6 +523,8 @@ public class PatternLayout : Layout {
 
     /**
      * Format for the function name: %F
+     *
+     * TODO: %F{1}, %F{2}, ...
      */
     private class FileNameToken : FormatToken {
 
@@ -593,6 +603,8 @@ public class PatternLayout : Layout {
 
     /**
      * Format for the function name: %M
+     *
+     * TODO: %M{1}, %M{2}, ...
      */
     private class FunctionNameToken : FormatToken {
 
