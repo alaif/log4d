@@ -1,0 +1,12 @@
+{
+	"name": "log4d",
+	"description": "Log4D - Log4j/Log4perl like logging backend for D",
+	"homepage": "https://github.com/klamonte/log4d",
+	"copyright": "Copyright © 2014, Kevin Lamonte",
+	"authors": ["Kevin Lamonte"],
+	"license": "BSL-1.0",
+	"dependencies": {
+		"logger": ">=0.2.8"
+	},
+	"sourcePaths": ["log4d"]
+}
