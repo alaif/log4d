@@ -35,7 +35,7 @@ void main(string [] args) {
 
 An even simpler method is to use easyInit().  This will set the root
 logger to TRACE level and emit messages to stdout with a simple layout
-of "<log level> - <message>":
+of "{log level} - {message}":
 
 ```D
 import log4d;
