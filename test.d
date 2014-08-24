@@ -62,4 +62,8 @@ public void main(string [] args) {
     stdlog.warning("Hello from stdlog - warning level");
     stdlog.error("ERROR from stdlog");
 
+    logObject = Log4D.getLogger;
+    logObject.warning("Hello from getLogger() with no arguments - warning level");
+
+
 }

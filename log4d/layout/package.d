@@ -357,11 +357,7 @@ public class PatternLayout : Layout {
     /**
      * Format for the date: %D
      *
-     * TODO:
-     *    %d{ABSOLUTE}
-     *    %d{DATE}
-     *    %d{ISO8801}
-     *    %d{<SimpleDateFormat spec>}
+     * TODO: %d{<SimpleDateFormat spec>}
      */
     private class DateToken : FormatToken {
 
@@ -388,8 +384,43 @@ public class PatternLayout : Layout {
 	 */
 	override public string render(Log4DLogger logger, Logger.LogEntry message) {
 	    auto writer = appender!string();
-	    if (braces.length == 0) {
-		// %d Current date in yyyy/MM/dd hh:mm:ss format
+	    if (braces == "ABSOLUTE") {
+		// HH:mm:ss,SSS
+		formattedWrite(writer, "%02d:%02d:%02d,%03d",
+		    message.timestamp.hour,
+		    message.timestamp.minute,
+		    message.timestamp.second,
+		    message.timestamp.fracSec.msecs);
+	    } else if (braces == "ISO8601") {
+		// yyyy/MM/DD HH:mm:ss,SSS
+		formattedWrite(writer, "%04d/%02d/%02d %02d:%02d:%02d,%03d",
+		    message.timestamp.year,
+		    message.timestamp.month,
+		    message.timestamp.day,
+		    message.timestamp.hour,
+		    message.timestamp.minute,
+		    message.timestamp.second,
+		    message.timestamp.fracSec.msecs);
+	    } else if (braces == "DATE") {
+
+		// This is ripped out of std.datetime.  monthToString() is
+		// not public, boo.
+		immutable string[12] shortMonthNames = [ "Jan", "Feb", "Mar",
+		    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
+		    "Dec" ];
+
+		// dd MMM yyyy HH:mm:ss,SSS
+		formattedWrite(writer, "%02d %s %04d %02d:%02d:%02d,%03d",
+		    message.timestamp.day,
+		    // monthToString(message.timestamp.month),
+		    shortMonthNames[message.timestamp.month - Month.jan],
+		    message.timestamp.year,
+		    message.timestamp.hour,
+		    message.timestamp.minute,
+		    message.timestamp.second,
+		    message.timestamp.fracSec.msecs);
+	    } else {
+		// Default: yyyy/MM/DD HH:mm:ss
 		formattedWrite(writer, "%04d/%02d/%02d %02d:%02d:%02d",
 		    message.timestamp.year,
 		    message.timestamp.month,

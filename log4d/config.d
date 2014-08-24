@@ -134,7 +134,8 @@ public class LogManager {
      * Returns:
      *    logger instance
      */
-    public Log4DLogger getLogger(string name, bool hasLogLevel = false,
+    public Log4DLogger getLogger(string name = __MODULE__,
+	bool hasLogLevel = false,
 	LogLevel logLevel = LogLevel.trace) {
 
 	Log4DLogger logger;
@@ -474,7 +475,7 @@ public Log4DLogger getRootLogger() {
  * Returns:
  *    logger instance
  */
-public Log4DLogger getLogger(string name, bool hasLogLevel = false,
+public Log4DLogger getLogger(string name = __MODULE__, bool hasLogLevel = false,
     LogLevel logLevel = LogLevel.trace) {
 
     return LogManager.getInstance().getLogger(name, hasLogLevel, logLevel);

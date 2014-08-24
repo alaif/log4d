@@ -27,7 +27,12 @@ import log4d;
 
 void main(string [] args) {
     Log4D.init("/path/to/logger.conf");
-    auto log = Log4D.getLogger("my.component.name");
+
+    // You can specify the logger name explicitly, or just use the
+    // default which is __MODULE__.
+    // auto log = Log4D.getLogger("my.component.name");
+
+    auto log = Log4D.getLogger;
 
     log.info("This message will show up in the appenders specified in the configuration file");
 }
@@ -42,7 +47,7 @@ import log4d;
 
 void main(string [] args) {
     Log4D.easyInit();
-    auto log = Log4D.getLogger("my.component.name");
+    auto log = Log4D.getLogger;
 
     log.info("This message will show up in the appenders specified in the configuration file");
 }
@@ -87,7 +92,7 @@ version 1.0:
   - [ ] init_and_watch()
 - [ ] PatternLayout:
   - [ ] %T A stack trace of functions called
-  - [ ] %d{...} Current date in customized format
+  - [ ] %d{...} Current date in customized format (SimpleDateFormat)
 - [ ] Appenders:
   - [ ] Alias Log4perl and Log4j appenders to Log4D class names
   - [ ] Screen
