@@ -49,7 +49,8 @@ void main(string [] args) {
 ```
 
 On the backend, Log4D is controlled by a configuration file that looks
-very similar to a Log4perl file.  An example is below:
+very similar to a Log4j or Log4perl configuration file.  An example is
+below:
 
 ```
 
@@ -83,8 +84,6 @@ This is a work in progress.  Many tasks remain before calling this
 version 1.0:
 
 - [ ] log4d.conf (non-XML) reader/parser
-  - [ ] init() - allow re-init
-  - [ ] init_once()
   - [ ] init_and_watch()
 - [ ] PatternLayout:
   - [ ] %T A stack trace of functions called

@@ -55,6 +55,14 @@ import log4d.config;
 /**
  * The Log4DLogger interfaces the client-side API (std.logger) to the Log4D
  * system of appenders, filters, and layouts.
+ *
+ * Unlike standard std.logger Loggers, Log4DLoggers inherit their log level
+ * from their parent logger if the level is not explicitly set.  However, due
+ * to the setter for Logger.logLevel being declared final in std.logger.core,
+ * one must use Log4DLogger.setLogLevel() to programmatically set a different
+ * logLevel that the rootLogger's logLevel.  This only impacts programs that
+ * set the logLevel's in D code, for loggers specified in the config file via
+ * Log4D.init(filename) this is a non-issue.
  */
 public class Log4DLogger : Logger {
 
@@ -64,8 +72,58 @@ public class Log4DLogger : Logger {
     /// The name (category) of this Log4DLogger
     public string name;
 
-    /// The appenders to write to.  If empty, go up the logger name (category) heirarchy.
+    /// The appenders to write to.  If empty, go up the logger name
+    /// (category) heirarchy.
     public Appender [] appenders;
+
+    /// A cached reference to my parent logger.
+    private Log4DLogger myParent = null;
+
+    /// If true, the log level was explicitly set.
+    private bool hasLogLevel = false;
+
+    /**
+     * Explicitly set the log level such that it does not inherit from its
+     * parent Log4DLogger.
+     *
+     * Params:
+     *    logLevel = the new LogLevel to use
+     */
+    public void setLogLevel(LogLevel logLevel) {
+	this.logLevel = logLevel;
+	hasLogLevel = true;
+	LogManager.getInstance().determineLogLevels();
+    }
+
+    /**
+     * Unset the log level such that it inherits the log level from its
+     * parent Log4DLogger.
+     */
+    public void unsetLogLevel() {
+	this.logLevel = parent().logLevel;
+	hasLogLevel = false;
+	LogManager.getInstance().determineLogLevels();
+    }
+
+    /**
+     * Figure out the appropriate log level for this logger, either one to
+     * inherit from its parent Log4DLogger, or the level set on this
+     * Log4DLogger.
+     */
+    public void determineLogLevel() {
+	if (hasLogLevel == false) {
+	    this.logLevel = parent().logLevel;
+	}
+    }
+
+    /**
+     * Figure out the appropriate parent logger for this logger.  This is a
+     * performance thing so that parent() is not scanning every time.
+     */
+    public void resetParent() {
+	myParent = null;
+	parent();
+    }
 
     /**
      * Add an Appender to write to.
@@ -82,11 +140,16 @@ public class Log4DLogger : Logger {
      *
      * Params:
      *    name = logger name, used as both a string to the user and a global unique key
+     *    hasLogLevel = if true, do not inherit the logLevel from the parent
      *    logLevel = initial logging level
      */
-    public this(string name, LogLevel logLevel) {
+    public this(string name, bool hasLogLevel, LogLevel logLevel) {
 	super(logLevel);
+	this.hasLogLevel = hasLogLevel;
 	this.name = name;
+	if (hasLogLevel == false) {
+	    this.logLevel = parent().logLevel;
+	}
     }
 
     /**
@@ -97,6 +160,10 @@ public class Log4DLogger : Logger {
      */
     public Log4DLogger parent() {
 	assert(this !is LogManager.getInstance().getRootLogger());
+
+	if (myParent !is null) {
+	    return myParent;
+	}
 
 	auto parentName = name;
 
@@ -112,29 +179,38 @@ public class Log4DLogger : Logger {
 	}
 
 	while (parentName != "") {
-	    // std.stdio.stdout.writefln("%s", parentName);
+	    // std.stdio.stdout.writefln("1 parentName %s", parentName);
 	    auto mat = matchFirst(parentName, reg);
+	    // std.stdio.stdout.writefln("2 mat: %s", mat);
 	    if (mat) {
 		parentName = mat.captures[1];
 		if (LogManager.getInstance().hasLogger(parentName)) {
-		    return LogManager.getInstance().getLogger(parentName);
+		    myParent = LogManager.getInstance().getLogger(parentName);
+		    return myParent;
 		}
 	    } else {
-		return LogManager.getInstance().getRootLogger();
+		myParent = LogManager.getInstance().getRootLogger();
+		return myParent;
 	    }
 	}
 	// Should never get here
 	assert(0, "Did not find parent logger name");
     }
     unittest {
-	auto log = getLogger("this.is.a.logger.name", LogLevel.info);
-	auto log2 = getLogger("this.is", LogLevel.info);
+	auto log = getLogger("this.is.a.logger.name", false, LogLevel.warning);
+	auto log2 = getLogger("this.is", true, LogLevel.info);
+	assert(log.logLevel == log2.logLevel);
+	assert(log.logLevel != LogManager.getInstance().getRootLogger().logLevel);
 	assert(log2 is log.parent());
 	assert(log2.parent().name == "rootLogger");
-	log2 = getLogger("this::is::a::logger::name", LogLevel.info);
-	log = getLogger("this::is::a", LogLevel.error);
+	log2 = getLogger("this::is::a::logger::name", false, LogLevel.info);
+	log = getLogger("this::is::a", false, LogLevel.error);
+	// std.stdio.stdout.writefln("log2.parent: %s", log2.parent().name);
+
 	assert(log is log2.parent());
-	log = new Log4DLogger("this.is:a.logger:name", LogLevel.info);
+	assert(log.logLevel == log2.logLevel);
+	assert(log.logLevel == LogManager.getInstance().getRootLogger().logLevel);
+	log = new Log4DLogger("this.is:a.logger:name", false, LogLevel.info);
 	assert(Log4DLogger.ROOT_LOGGER == log.parent().name);
 	assert(LogManager.getInstance().getRootLogger() is log.parent());
     }

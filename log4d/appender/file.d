@@ -69,6 +69,16 @@ public class FileAppender : Appender {
     }
 
     /**
+     * Release any resources used by this appender, e.g. close a file,
+     * terminate a socket connection, etc.
+     */
+    override public void shutdown() {
+	if (file.isOpen()) {
+	    file.close();
+	}
+    }
+
+    /**
      * Set a property from the config file.
      *
      * Params:

@@ -42,6 +42,7 @@ module log4d.config;
 
 import core.sync.mutex;
 import std.conv;
+import std.exception;
 import std.file;
 import std.logger;
 import std.stdio;
@@ -74,6 +75,12 @@ public class LogManager {
     /// List of loggers by category
     private Log4DLogger[string] loggers;
 
+    /// If true, an init function has been called
+    public bool initialized = false;
+
+    /// If true, one cannot call an init function again
+    public bool initLocked = false;
+
     /**
      * Obtain the singleton instance, creating it if needed.
      *
@@ -95,31 +102,54 @@ public class LogManager {
     private this() {
 	mutex = new Mutex();
 
-	// Setup the root logger with default INFO level
-	rootLogger = new Log4DLogger(Log4DLogger.ROOT_LOGGER, LogLevel.info);
+	// Setup the root logger with default DEBUG/TRACE level
+	rootLogger = new Log4DLogger(Log4DLogger.ROOT_LOGGER, true, LogLevel.trace);
+    }
+
+    /**
+     * Reset all the logLevels of the defined loggers
+     */
+    public void determineLogLevels() {
+	synchronized (mutex) {
+	    foreach (logger; loggers) {
+		logger.resetParent();
+		logger.determineLogLevel();
+	    }
+	}
     }
 
     /**
      * Factory method to retrieve a Logger instance.  It will create one if
-     * it does not already exist.  Note that the default LogLevel is INFO,
-     * not TRACE.  This is a departure from log4j in which the default level
-     * for the root logger is DEBUG.
+     * it does not already exist.
+     *
+     * By default the logLevel is inherited from the parent logger.  Set
+     * hasLogLevel to true to break the inheritance and make this Logger (and
+     * all its children) use a different LogLevel.
      *
      * Params:
      *    name = logger name, used as a global unique key
+     *    hasLogLevel = if true, do not inherit the logLevel from the parent
      *    logLevel = LogLevel.info/debug/...
      *
      * Returns:
      *    logger instance
      */
-    public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.info) {
+    public Log4DLogger getLogger(string name, bool hasLogLevel = false,
+	LogLevel logLevel = LogLevel.trace) {
+
 	Log4DLogger logger;
 	synchronized (mutex) {
 	    if (name in loggers) {
 		logger = loggers[name];
 	    } else {
-		logger = new Log4DLogger(name, logLevel);
+		logger = new Log4DLogger(name, hasLogLevel, logLevel);
 		loggers[name] = logger;
+		foreach (logger; loggers) {
+		    logger.resetParent();
+		}
+		if (hasLogLevel == true) {
+		    determineLogLevels();
+		}
 	    }
 	}
 	return logger;
@@ -177,12 +207,39 @@ log4d.appender.CONSOLE.layout = log4d.layout.SimpleLayout
     }
 
     /**
+     * Initialize Log4D system.  Subsequent calls to any of the init
+     * functions will throw an exception.
+     *
+     * Params:
+     *    configFilename = name of a file to read the configuration from
+     */
+    public void initOnce(string configFilename) {
+	initFromString(readText(configFilename));
+	initLocked = true;
+    }
+
+    /**
      * Initialize Log4D system.
      *
      * Params:
      *    configData = contents of a configuration file
      */
     public void initFromString(string configData) {
+	enforce(initLocked == false, "initOnce() has already been called");
+
+	// For the re-init case, we just shutdown all the appenders and
+	// re-run everything else as normal.
+	foreach (logger; loggers) {
+	    foreach (appender; logger.appenders) {
+		appender.shutdown();
+	    }
+	    logger.appenders.length = 0;
+	}
+	foreach (appender; getRootLogger().appenders) {
+	    appender.shutdown();
+	}
+	getRootLogger().appenders.length = 0;
+
 	// Redirect stdlog to Log4D
 	stdlog = getRootLogger();
 
@@ -247,7 +304,7 @@ log4d.appender.CONSOLE.layout = log4d.layout.SimpleLayout
 			    lineNumber, line);
 			continue;
 		    }
-		    getRootLogger().logLevel = levelFromString(strip(appenderTokens[0]));
+		    getRootLogger().setLogLevel(levelFromString(strip(appenderTokens[0])));
 		    foreach (a; appenderTokens[1 .. $]) {
 			rootAppendersToAdd[strip(a)] = true;
 		    }
@@ -323,7 +380,7 @@ log4d.appender.CONSOLE.layout = log4d.layout.SimpleLayout
 			    lineNumber, line);
 			continue;
 		    }
-		    logger.logLevel = levelFromString(strip(appenderTokens[0]));
+		    logger.setLogLevel(levelFromString(strip(appenderTokens[0])));
 		    foreach (a; appenderTokens[1 .. $]) {
 			loggerAppendersToAdd[strip(a)] ~= logger.name;
 		    }
@@ -353,6 +410,8 @@ log4d.appender.CONSOLE.layout = log4d.layout.SimpleLayout
 		getLogger(loggerName).addAppender(appenders[appenderName]);
 	    }
 	}
+
+	initialized = true;
     }
 
 }
@@ -378,6 +437,17 @@ public void init(string configFilename) {
 }
 
 /**
+ * Initialize Log4D system.  Subsequent calls to any of the init functions
+ * will throw an exception.
+ *
+ * Params:
+ *    configFilename = name of a file to read the configuration from
+ */
+public void initOnce(string configFilename) {
+    LogManager.getInstance().initOnce(configFilename);
+}
+
+/**
  * Factory method to retrieve the root Logger instance.
  *
  * Returns:
@@ -389,19 +459,25 @@ public Log4DLogger getRootLogger() {
 
 /**
  * Factory method to retrieve a Logger instance.  It will create one if it
- * does not already exist.  Note that the default LogLevel is INFO, not
- * TRACE.  This is a departure from log4j in which the default level for the
- * root logger is DEBUG.
+ * does not already exist.
+ *
+ * By default the logLevel is inherited from the parent logger.  Set
+ * hasLogLevel to true to break the inheritance and make this Logger (and all
+ * its children) use a different LogLevel.
+ *
  *
  * Params:
  *    name = logger name, used as a global unique key
+ *    hasLogLevel = if true, do not inherit the logLevel from the parent
  *    logLevel = LogLevel.info/debug/...
  *
  * Returns:
  *    logger instance
  */
-public Log4DLogger getLogger(string name, LogLevel logLevel = LogLevel.info) {
-    return LogManager.getInstance().getLogger(name, logLevel);
+public Log4DLogger getLogger(string name, bool hasLogLevel = false,
+    LogLevel logLevel = LogLevel.trace) {
+
+    return LogManager.getInstance().getLogger(name, hasLogLevel, logLevel);
 }
 
 /**
